@@ -13,7 +13,8 @@ Pyjo.AWS - Amazon Web Services for Pyjoyment
 
 :mod:`Pyjo.AWS` is the namespace of the APIs of Amazon Web Services for
 :mod:`Pyjoyment`, which :mod:`Pyjo.UserAgent` calls, without an SDK:
-:mod:`Pyjo.AWS.SigV4` signs its requests.
+:mod:`Pyjo.AWS.SigV4` signs its requests, and :mod:`Pyjo.AWS.Config` reads the
+shared configuration files of AWS.
 
 It is for a program that needs a few calls of AWS and no dependency for them,
 not a replacement of the SDKs of AWS, which have every API.
@@ -21,8 +22,8 @@ not a replacement of the SDKs of AWS, which have every API.
 See also
 --------
 
-:mod:`Pyjo.AWS.SigV4`, :mod:`Pyjo.UserAgent`, :mod:`Pyjoyment`,
-https://github.com/pyjoyment/Pyjoyment.
+:mod:`Pyjo.AWS.SigV4`, :mod:`Pyjo.AWS.Config`, :mod:`Pyjo.UserAgent`,
+:mod:`Pyjoyment`, https://github.com/pyjoyment/Pyjoyment.
 """
 
 import importlib.metadata
