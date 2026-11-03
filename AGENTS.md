@@ -197,6 +197,44 @@ imports SSO, which imports the client.
 `str` of a `Pyjo.Exception` ends with a new line, as `Mojo::Exception` does,
 so a message that includes another exception takes its `message`.
 
+## Roles
+
+A profile of `role_arn` is resolved as botocore resolves it, which comes
+before its SSO, its keys and its `credential_process`: `source_profile` or
+`credential_source`, both of which are an error, for `AssumeRole`, signed
+with the credentials of the source, or `web_identity_token_file`, without
+them, for `AssumeRoleWithWebIdentity`, unsigned. A source profile with keys
+of its own gives those, without its role, and a source profile without them
+is resolved with its role, whose cycle is an error; so a profile may be the
+source of its own role, a common way of a role of the keys of the same
+profile. `Pyjo.AWS.Credentials.Profile` keeps the profiles that lead to it in
+`visited`, and `roles=False` makes it give the keys of a source profile.
+
+`credential_source = Environment` takes the credentials of the environment;
+`Ec2InstanceMetadata` and `EcsContainer` take the providers of IMDS and the
+container, of the next step. `mfa_serial` is an error, as botocore prompts
+for the code on the terminal, which a library of a server has not.
+
+The region of STS is the one of the profile of the role, or of the shared
+files, or `us-east-1`, whose regional endpoint is the global one, as the
+regional endpoints of STS are the default of the SDKs of AWS now. The name of
+the session is `role_session_name`, or `pyjo-aws-` and the time, as botocore
+names it `botocore-session-` and the time.
+
+`Pyjo.AWS.Credentials.WebIdentity` takes the role, the token file and the
+name of the session of the environment, `AWS_ROLE_ARN`,
+`AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_SESSION_NAME`, only without
+`role_arn` and `token_file`, so that a profile does not get the name of the
+session of the environment. It reads the file at each fetch, as EKS rotates
+the token. It comes after the environment and before the profile in
+`Pyjo.AWS.Credentials.Chain`, as the order of the SDKs of AWS of the
+Reference Guide has it.
+
+The credentials of a role are kept by the provider of the profile, and the
+credentials of the source by the provider of the source, which is a new one
+at each fetch of the role, as the role is got again only when its
+credentials expire.
+
 ## Imports of the Package
 
 The modules of the distribution import the package and each other relatively,

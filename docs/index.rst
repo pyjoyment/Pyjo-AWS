@@ -13,12 +13,15 @@
     api/Pyjo_AWS_Client
     api/Pyjo_AWS_Config
     api/Pyjo_AWS_Credentials
+    api/Pyjo_AWS_Credentials_AssumeRole
     api/Pyjo_AWS_Credentials_Chain
     api/Pyjo_AWS_Credentials_Environment
     api/Pyjo_AWS_Credentials_Process
     api/Pyjo_AWS_Credentials_Profile
     api/Pyjo_AWS_Credentials_Provider
     api/Pyjo_AWS_Credentials_SSO
+    api/Pyjo_AWS_Credentials_Static
+    api/Pyjo_AWS_Credentials_WebIdentity
     api/Pyjo_AWS_Error
     api/Pyjo_AWS_Protocol
     api/Pyjo_AWS_Protocol_JSON
