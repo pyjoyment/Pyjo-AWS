@@ -27,7 +27,8 @@ as EKS rotates it, or of ``AWS_CONTAINER_AUTHORIZATION_TOKEN`` in the header
 A URL of HTTP is one of the agents of ECS and EKS, ``169.254.170.2``,
 ``169.254.170.23`` or ``fd00:ec2::23``, or of the loopback, as the SDKs of AWS
 allow it, and a URL of HTTPS is any. The user agent of the provider has a
-timeout of 2 seconds, and a request is tried 3 times, as botocore does.
+timeout of 2 seconds and keeps no connections, and a request is tried 3
+times, as botocore does.
 
 See also
 --------
@@ -91,7 +92,7 @@ class Pyjo_AWS_Credentials_Container(Provider.object):
         the token of the environment without ``relative_uri`` and
         ``full_uri``.
         """
-        super().__init__(ua=ua or Pyjo.UserAgent.new(connect_timeout=timeout, inactivity_timeout=timeout), **kwargs)
+        super().__init__(ua=ua or _user_agent(timeout), **kwargs)
 
         environment = relative_uri is None and full_uri is None
 
@@ -217,6 +218,12 @@ class Pyjo_AWS_Credentials_Container(Provider.object):
             f'The AWS_CONTAINER_CREDENTIALS_FULL_URI {self.full_uri} is not HTTPS, an agent of ECS or EKS, '
             'or the loopback'
         )
+
+
+# A user agent without kept connections, as the credentials come once an hour, so that a long program does not keep
+# a socket to the agent open
+def _user_agent(timeout: float) -> Pyjo.UserAgent.object:
+    return Pyjo.UserAgent.new(connect_timeout=timeout, inactivity_timeout=timeout, max_connections=0)
 
 
 def _credentials(url: str, tx: Pyjo.Transaction.HTTP.object) -> Credentials.object:

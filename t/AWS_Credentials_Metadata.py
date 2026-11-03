@@ -150,7 +150,7 @@ while True:
             raise
         time.sleep(0.1)
 
-control = Pyjo.UserAgent.new()
+control = Pyjo.UserAgent.new(max_connections=0)
 
 
 def state(**values):
@@ -210,6 +210,7 @@ try:
                 'HTTP of another host',
             )
             is_ok(Container().ua.connect_timeout, 2, 'user agent of its own with a short timeout')
+            is_ok(Container().ua.max_connections, 0, 'no kept connections')
 
         with environ(AWS_CONTAINER_CREDENTIALS_FULL_URI=CONTAINER):
             state()
@@ -335,6 +336,7 @@ try:
             is_ok(provider.endpoint, 'http://169.254.169.254', 'endpoint of IPv4')
             is_ok(provider.timeout, 1.0, 'timeout of 1 second')
             is_ok(provider.ua.connect_timeout, 1.0, 'user agent of its own with the timeout')
+            is_ok(provider.ua.max_connections, 0, 'no kept connections')
             is_ok(provider.attempts, 1, 'one attempt')
 
         with environ(

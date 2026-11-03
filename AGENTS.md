@@ -240,6 +240,11 @@ credentials expire.
 have user agents of their own, with short timeouts, 2 seconds and 3
 attempts of the container, as botocore has them, and 1 second and 1 attempt
 of IMDS, of `metadata_service_timeout` and `metadata_service_num_attempts`.
+They keep no connections, `max_connections=0`, as the credentials come once
+an hour: a connection kept by a chain, which lives as long as its client,
+would be a socket open to the agent or IMDS, and `__del__` of
+`Pyjo.UserAgent` does not close it at the exit of the interpreter, which
+`ResourceWarning` of the workflow Tests reports.
 `Pyjo.AWS.Credentials.Chain` does not give them its user agent, which is the
 one of the client, of the timeouts of `Pyjo.UserAgent`: a machine that is
 not an instance of EC2 has nothing on `169.254.169.254`, where a request

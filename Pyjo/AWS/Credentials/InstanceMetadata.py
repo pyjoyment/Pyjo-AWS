@@ -105,11 +105,14 @@ class Pyjo_AWS_Credentials_InstanceMetadata(Provider.object):
 
         The timeout of the service, of the ``AWS_METADATA_SERVICE_TIMEOUT``
         environment variable or ``metadata_service_timeout`` of the profile,
-        or 1 second, of a new :attr:`ua` of the provider.
+        or 1 second, of a new :attr:`ua` of the provider, which keeps no
+        connections, as the credentials come once an hour.
         """
 
         super().__init__(
-            ua=ua or Pyjo.UserAgent.new(connect_timeout=self.timeout, inactivity_timeout=self.timeout), **kwargs
+            ua=ua
+            or Pyjo.UserAgent.new(connect_timeout=self.timeout, inactivity_timeout=self.timeout, max_connections=0),
+            **kwargs,
         )
 
         self.config = config
