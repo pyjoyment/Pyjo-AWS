@@ -152,8 +152,7 @@ class Pyjo_AWS_Protocol[T](Pyjo.Base.object):
         """
         dom = Pyjo.DOM.new()
         dom.xml = True
-        parsed: Pyjo.DOM.object = _dom(dom).parse(tx.res.text)
-        return parsed
+        return dom.parse(tx.res.text)
 
     def xml_error(self, tx: Pyjo.Transaction.HTTP.object) -> Error.object:
         """::
@@ -200,14 +199,8 @@ def value_of(value: Any) -> str:
     return str(value)
 
 
-# Pyjo.DOM of Pyjoyment 0.2.0 annotates its arguments of CSS and HTML as object, which is its alias of Pyjo_DOM there,
-# not builtins.object
-def _dom(dom: Pyjo.DOM.object) -> Any:
-    return dom
-
-
 def _text(dom: Pyjo.DOM.object, selector: str) -> str | None:
-    element: Pyjo.DOM.object | None = _dom(dom).at(selector)
+    element = dom.at(selector)
     return element.text.strip() if element is not None else None
 
 

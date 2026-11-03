@@ -163,12 +163,6 @@ prefix of its endpoint and its ID, which are the same for most services,
 and differ for SSO, `awsssoportal`, `portal.sso` and `SSO`. The signer of S3
 signs the path as it is, with the hash of the body, as S3 wants.
 
-`Pyjo.DOM` of Pyjoyment 0.2.0 annotates its arguments of CSS and HTML as
-`object`, which is its alias of `Pyjo_DOM` in that module, so pyright strict
-rejects a string there: `_dom` of `Pyjo.AWS.Protocol` casts it to `Any`,
-until a release of Pyjoyment fixes it
-([pyjoyment/Pyjoyment#498](https://github.com/pyjoyment/Pyjoyment/issues/498)).
-
 ## Imports of the Package
 
 The modules of the distribution import the package and each other relatively,
