@@ -210,9 +210,8 @@ source of its own role, a common way of a role of the keys of the same
 profile. `Pyjo.AWS.Credentials.Profile` keeps the profiles that lead to it in
 `visited`, and `roles=False` makes it give the keys of a source profile.
 
-`credential_source = Environment` takes the credentials of the environment;
-`Ec2InstanceMetadata` and `EcsContainer` take the providers of IMDS and the
-container, of the next step. `mfa_serial` is an error, as botocore prompts
+`credential_source` takes the credentials of the environment, of the
+container or of IMDS. `mfa_serial` is an error, as botocore prompts
 for the code on the terminal, which a library of a server has not.
 
 The region of STS is the one of the profile of the role, or of the shared
@@ -234,6 +233,41 @@ The credentials of a role are kept by the provider of the profile, and the
 credentials of the source by the provider of the source, which is a new one
 at each fetch of the role, as the role is got again only when its
 credentials expire.
+
+## The Container and the Instance Metadata
+
+`Pyjo.AWS.Credentials.Container` and `Pyjo.AWS.Credentials.InstanceMetadata`
+have user agents of their own, with short timeouts, 2 seconds and 3
+attempts of the container, as botocore has them, and 1 second and 1 attempt
+of IMDS, of `metadata_service_timeout` and `metadata_service_num_attempts`.
+`Pyjo.AWS.Credentials.Chain` does not give them its user agent, which is the
+one of the client, of the timeouts of `Pyjo.UserAgent`: a machine that is
+not an instance of EC2 has nothing on `169.254.169.254`, where a request
+would wait for the connect timeout of the client, at each call without
+credentials.
+
+A full URI of the container of HTTP is one of an agent of ECS or EKS Pod
+Identity or of the loopback, as the SDKs of AWS allow it, so that a variable
+of the environment does not send the token of the container to another
+host. The token file comes over the token and is read at each fetch, as EKS
+rotates it. An error of the agent of 5xx and of the connection is tried
+again, one of 4xx is not.
+
+IMDS without an answer, as of a machine that is not EC2, or without a role,
+has no credentials, as the SDKs of AWS have it, so that the chain ends
+without them, and the token of IMDSv2 that is forbidden falls back to IMDSv1,
+unless `AWS_EC2_METADATA_V1_DISABLED`; the credentials of a role that the
+service does not give are an error. The extended credentials of IMDS, with
+the account, and the static stability of expired credentials are left out.
+
+The tests set `AWS_EC2_METADATA_DISABLED=true` in their environment, as a
+runner of GitHub Actions has the IMDS of Azure on `169.254.169.254`.
+`t/AWS_Credentials_Metadata.py` serves the agent of the container, IMDS and
+STS with an application of Pyjoyment.Lite in a process of its own, of a
+script that the test writes, as a server of a user agent of the test is not
+reached by the user agents of the providers, and a server in a thread is
+not either, as the event loops of Pyjo are not safe in threads; the
+endpoints are those of the environment, as in production.
 
 ## Imports of the Package
 

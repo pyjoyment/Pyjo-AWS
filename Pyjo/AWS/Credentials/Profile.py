@@ -35,8 +35,10 @@ The role of ``source_profile`` is assumed with the credentials of that
 profile, of :mod:`Pyjo.AWS.Credentials.AssumeRole`, which may be a role
 itself, whose cycle is an error; a source profile with its own keys gives
 those, without its role, as botocore does, so that a profile may be the
-source of its own role. The role of ``credential_source = Environment`` is
-assumed with the credentials of the environment, and the role of
+source of its own role. The role of ``credential_source`` is assumed with
+the credentials of ``Environment``, of :mod:`Pyjo.AWS.Credentials.Environment`,
+``EcsContainer``, of :mod:`Pyjo.AWS.Credentials.Container`, or
+``Ec2InstanceMetadata``, of :mod:`Pyjo.AWS.Credentials.InstanceMetadata`, and the role of
 ``web_identity_token_file`` with the token of the file, of
 :mod:`Pyjo.AWS.Credentials.WebIdentity`. A role with ``mfa_serial`` is an
 error, as there is no prompt for the code.
@@ -58,7 +60,7 @@ Classes
 import Pyjo.Exception
 
 from .. import Config, Credentials
-from . import SSO, AssumeRole, Environment, Process, Provider, WebIdentity
+from . import SSO, AssumeRole, Container, Environment, InstanceMetadata, Process, Provider, WebIdentity
 
 from collections.abc import Collection
 from typing import Any
@@ -217,11 +219,10 @@ class Pyjo_AWS_Credentials_Profile(Provider.object):
             )
         elif credential_source == 'Environment':
             source = Environment.new(ua=self.ua)
-        elif credential_source in ('Ec2InstanceMetadata', 'EcsContainer'):
-            # TODO: the container and IMDS of the next step
-            raise Pyjo.Exception.new(
-                f'The credential_source {credential_source} of the profile {name} of AWS is not supported yet'
-            )
+        elif credential_source == 'Ec2InstanceMetadata':
+            source = InstanceMetadata.new(config=config, refresh=self.refresh)
+        elif credential_source == 'EcsContainer':
+            source = Container.new(refresh=self.refresh)
         else:
             raise Pyjo.Exception.new(f'Invalid credential_source {credential_source} of the profile {name} of AWS')
 
