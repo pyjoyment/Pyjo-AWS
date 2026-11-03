@@ -1,3 +1,4 @@
+import Pyjo.AWS.Credentials
 import Pyjo.AWS.SigV4
 import Pyjo.File
 import Pyjo.JSON
@@ -184,5 +185,22 @@ with subtest('User agent'):
         if name.lower() not in signed:
             req.headers.remove(name)
     is_ok(re.search(r'Signature=(\w+)', authorization)[1], sigv4.signature(req), 'signature verified by the server')
+
+with subtest('Credentials'):
+    environ = dict(os.environ)
+    try:
+        os.environ.update(AWS_ACCESS_KEY_ID='AKIDENV', AWS_SECRET_ACCESS_KEY='env', AWS_SESSION_TOKEN='env')
+        credentials = Pyjo.AWS.Credentials.new(access_key_id='AKIDEXAMPLE', secret_access_key='secret')
+        sigv4 = Pyjo.AWS.SigV4.new(service='lambda', credentials=credentials)
+        is_ok(sigv4.access_key_id, 'AKIDEXAMPLE', 'access key ID of the credentials')
+        is_ok(sigv4.secret_access_key, 'secret', 'secret access key of the credentials')
+        is_ok(sigv4.session_token, None, 'no session token of the environment')
+        credentials.session_token = 'token'
+        is_ok(Pyjo.AWS.SigV4.new(service='lambda', credentials=credentials).session_token, 'token', 'session token')
+        sigv4 = Pyjo.AWS.SigV4.new(service='lambda', credentials=credentials, access_key_id='AKIDOTHER')
+        is_ok(sigv4.access_key_id, 'AKIDOTHER', 'access key ID of an argument first')
+    finally:
+        os.environ.clear()
+        os.environ.update(environ)
 
 done_testing()

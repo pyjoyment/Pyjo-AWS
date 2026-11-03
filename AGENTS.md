@@ -65,6 +65,40 @@ the section `services` of the profile, `AWS_ENDPOINT_URL`, and
 `SSO OIDC`, with `_` in the place of the spaces and the hyphens, in upper
 case in the environment and in lower case in the section `services`.
 
+## The Credentials
+
+A provider of `Pyjo.AWS.Credentials.Provider` gets its credentials in
+`fetch`, a generator that yields what it waits for, a transaction of HTTP or
+a `Command`, and gets the result back, or the exception of its error thrown
+in, and returns the credentials. `_run` drives it blocking, with `start` of
+the user agent and `subprocess.run`, and `_run_p` non-blocking, with
+`start_p` and `run_p` of `Pyjo.IOLoop.ChildProcess`, so that the code of a
+provider is written once for `credentials` and `credentials_p`, and a
+provider that needs the credentials of another, as a role those of its
+source, takes them with `yield from` of its `steps`, cached as its own. A
+coroutine would not do: a blocking call cannot run the event loop that is
+running already, where a blocking request of the user agent runs on an event
+loop of its own.
+
+The error of a connection, which `start_p` rejects with a string and `start`
+leaves in `error` of the transaction without a `code`, is thrown into the
+generator as one `Pyjo.Exception`, with the method and the URL, and so is a
+program that cannot be run, so that a provider handles both modes alike. A
+response with an error status is a transaction as any other: the provider
+reads its status.
+
+A provider returns `None` when it is not configured, as an environment
+without its variables, and raises when it is configured and fails, as a
+profile with an access key without its secret, which ends
+`Pyjo.AWS.Credentials.Chain`, as the SDKs of AWS do, so that a broken profile
+is not hidden by the credentials of the next provider. A provider keeps its
+credentials until `refresh` seconds before their expiration, 5 minutes as
+the SDK of JavaScript has it, and `credentials_p` gives the calls while it
+gets them the same promise, so that a burst of requests gets them once.
+`Pyjo.AWS.Credentials.Environment` never keeps them, as the environment may
+change. `__repr__` of the credentials has no secret, as a log or a traceback
+shows it.
+
 ## Imports of the Package
 
 The modules of the distribution import the package and each other relatively,
