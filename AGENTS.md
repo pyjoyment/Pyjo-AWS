@@ -163,6 +163,40 @@ prefix of its endpoint and its ID, which are the same for most services,
 and differ for SSO, `awsssoportal`, `portal.sso` and `SSO`. The signer of S3
 signs the path as it is, with the hash of the body, as S3 wants.
 
+## SSO
+
+`Pyjo.AWS.Credentials.SSO` takes the token of `aws sso login` of the cache
+of the AWS CLI, `~/.aws/sso/cache/<SHA-1>.json`, of the name of the section
+`sso-session` or of the start URL of a legacy profile, as botocore names it,
+and gets the credentials of the role with `GetRoleCredentials` of SSO,
+unsigned, with the token in `X-Amz-Sso_bearer_token`. It does not log in:
+the device authorization of a login needs a browser, which is the job of
+the AWS CLI, so a missing or expired token is an error that tells to run
+`aws sso login`.
+
+The token of a section `sso-session` is refreshed with `CreateToken` of SSO
+OIDC, `refresh` seconds before it expires, as the credentials are, and only
+with the client of its registration that is not expired, as the AWS CLI
+writes the client and the refresh token for those only; a legacy token is
+not refreshed. A failed refresh keeps the old token while it is valid, as
+the SDKs of AWS do, so that a failure of SSO OIDC does not end a session
+before its time. The new token is written back to the same file, replaced
+at once and readable by its owner only, as the AWS CLI shares it.
+
+The endpoints are those of the IDs `SSO` and `SSO OIDC`, the prefixes
+`portal.sso` and `oidc`, in the `sso_region` of the session, not the region
+of the profile. `Pyjo.AWS.Credentials.Profile` takes SSO before the keys of
+the profile, after the roles of the next steps, as botocore orders them.
+The profile and the section must agree on `sso_start_url` and `sso_region`
+where the profile has them too, which is an error otherwise, as in botocore.
+
+`Pyjo.AWS.Client` imports `Pyjo.AWS.Credentials.Chain` in its constructor,
+not at the top of the module, as the chain imports the profile, which
+imports SSO, which imports the client.
+
+`str` of a `Pyjo.Exception` ends with a new line, as `Mojo::Exception` does,
+so a message that includes another exception takes its `message`.
+
 ## Imports of the Package
 
 The modules of the distribution import the package and each other relatively,

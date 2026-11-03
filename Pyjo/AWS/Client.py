@@ -64,7 +64,7 @@ import Pyjo.URL
 import Pyjo.UserAgent
 
 from . import Config, Credentials, Protocol, SigV4, Steps
-from .Credentials import Chain, Provider
+from .Credentials import Provider
 
 from typing import Any
 
@@ -163,6 +163,9 @@ class Pyjo_AWS_Client(Pyjo.Base.object):
         The user agent of the requests, a new :mod:`Pyjo.UserAgent` object by
         default, whose event ``start`` signs each request.
         """
+
+        # Chain imports the providers of the profiles, of which SSO and the roles import this module
+        from .Credentials import Chain
 
         self.credentials: Provider.object = credentials or Chain.new(config=self.config, ua=self.ua)
         """::

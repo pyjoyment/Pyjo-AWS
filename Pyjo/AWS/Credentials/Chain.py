@@ -26,7 +26,8 @@ first of its providers that has them, in the order of the SDKs of AWS by
 default:
 
 #. the environment, of :mod:`Pyjo.AWS.Credentials.Environment`,
-#. the profile of the shared files, of :mod:`Pyjo.AWS.Credentials.Profile`.
+#. the profile of the shared files, of :mod:`Pyjo.AWS.Credentials.Profile`,
+   with its SSO, its ``credential_process`` or its keys.
 
 A provider that is not configured passes on to the next one, and the error
 of one that is configured ends the chain, as the SDKs of AWS do, so that a
