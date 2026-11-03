@@ -77,23 +77,23 @@ class Pyjo_AWS_Credentials_Process(Provider.object):
         The command of the program, with its arguments.
         """
 
-    def fetch(self) -> Provider.Steps:
+    async def fetch(self) -> Credentials.object | None:
         """::
 
-            credentials = yield from provider.fetch()
+            credentials = await provider.fetch()
 
         The credentials that the program prints.
         """
         args = shlex.split(self.command)
         if not args:
             raise Pyjo.Exception.new('Empty credential_process of AWS')
-        code, out, err = yield Provider.Command.new(args)
+        code, out, err = await self.run(args)
         name = args[0]
         if code != 0:
-            message = cast(bytes, err).decode(errors='replace').strip()
+            message = err.decode(errors='replace').strip()
             raise Pyjo.Exception.new(f'credential_process {name} failed with {code}: {message}')
         try:
-            data = Pyjo.JSON.decode_json(cast(bytes, out))
+            data = Pyjo.JSON.decode_json(out)
         except Exception as e:
             raise Pyjo.Exception.new(f'credential_process {name} printed no JSON: {e}') from e
         if not isinstance(data, dict):

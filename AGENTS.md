@@ -68,17 +68,32 @@ case in the environment and in lower case in the section `services`.
 ## The Credentials
 
 A provider of `Pyjo.AWS.Credentials.Provider` gets its credentials in
-`fetch`, a generator that yields what it waits for, a transaction of HTTP or
-a `Command`, and gets the result back, or the exception of its error thrown
-in, and returns the credentials. `_run` drives it blocking, with `start` of
-the user agent and `subprocess.run`, and `_run_p` non-blocking, with
-`start_p` and `run_p` of `Pyjo.IOLoop.ChildProcess`, so that the code of a
-provider is written once for `credentials` and `credentials_p`, and a
-provider that needs the credentials of another, as a role those of its
-source, takes them with `yield from` of its `steps`, cached as its own. A
-coroutine would not do: a blocking call cannot run the event loop that is
-running already, where a blocking request of the user agent runs on an event
-loop of its own.
+`fetch`, a coroutine that awaits what it waits for, a `Request` of `start`
+or a `Command` of `run`, whose `__await__` yields the operation itself, and
+gets the result back, or the exception of its error thrown in, and returns
+the credentials. No event loop runs the coroutine: `_run` drives it with
+`send` and `throw`, blocking, with `start` of the user agent and
+`subprocess.run`, and `_run_p` non-blocking, with `start_p` and `run_p` of
+`Pyjo.IOLoop.ChildProcess`, so that the code of a provider is written once
+for `credentials` and `credentials_p`, and a provider that needs the
+credentials of another, as a role those of its source, awaits its `steps`,
+cached as its own. A coroutine that an event loop runs would not do: a
+blocking call cannot run the event loop that is running already, where a
+blocking request of the user agent runs on an event loop of its own.
+
+So a provider awaits nothing else, not a `Pyjo.Promise` and not a future of
+asyncio, whose `__await__` yields what only an event loop knows, the promise
+itself on the reactor of Pyjo and a future on the one of asyncio. The driver
+closes the coroutine and raises a `TypeError`, which it does not throw into
+the coroutine, where the `except` of the errors of a connection would hide
+it.
+
+`fetch` may be a generator too, which yields the operations, as Python
+drives both alike. `steps` gives a `Steps`, whose `__await__` and `__iter__`
+are the same generator, so that `await` and `yield from` take the steps of a
+provider of either kind. The providers of the package are coroutines, as
+pyright knows the types of what `await` of `start` and `run` gives back,
+which `yield` leaves as `Any`.
 
 The error of a connection, which `start_p` rejects with a string and `start`
 leaves in `error` of the transaction without a `code`, is thrown into the

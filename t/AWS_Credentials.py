@@ -339,9 +339,9 @@ with subtest('Requests'):
             super().__init__(**kwargs)
             self.url = url
 
-        def fetch(self):
+        async def fetch(self):
             try:
-                tx = yield self.ua.build_tx('GET', self.url, {'X-Token': 'secret'})
+                tx = await self.start(self.ua.build_tx('GET', self.url, {'X-Token': 'secret'}))
             except Exception as e:
                 raise Pyjo.Exception.new(f'Cannot get credentials: {e}') from e
             if tx.res.code != 200:
@@ -370,5 +370,89 @@ with subtest('Requests'):
         re.compile(r'^Cannot get credentials: GET http://127\.0\.0\.1:1/credentials: '),
         'connection error thrown in, non-blocking',
     )
+
+with subtest('Generators and coroutines'):
+
+    class Generated(Pyjo.AWS.Credentials.Provider.object):
+        def __init__(self, url, **kwargs):
+            super().__init__(**kwargs)
+            self.url = url
+
+        def fetch(self):
+            tx = yield self.start(self.ua.build_tx('GET', self.url, {'X-Token': 'secret'}))
+            if tx.res.code != 200:
+                raise Pyjo.Exception.new(f'Cannot get credentials: {tx.res.code}')
+            code, out, _ = yield self.run([sys.executable, '-c', 'print("process")'])
+            return Pyjo.AWS.Credentials.new(
+                access_key_id=tx.res.json('/AccessKeyId'),
+                secret_access_key=out.decode().strip(),
+                provider=f'generator {code}',
+            )
+
+    class Awaited(Pyjo.AWS.Credentials.Provider.object):
+        def __init__(self, source, **kwargs):
+            super().__init__(**kwargs)
+            self.source = source
+
+        async def fetch(self):
+            source = await self.source.steps()
+            return Pyjo.AWS.Credentials.new(
+                access_key_id=f'{source.access_key_id}AWAITED',
+                secret_access_key=source.secret_access_key,
+                provider=f'awaited {source.provider}',
+            )
+
+    class Yielded(Awaited):
+        def fetch(self):
+            source = yield from self.source.steps()
+            return Pyjo.AWS.Credentials.new(
+                access_key_id=f'{source.access_key_id}YIELDED',
+                secret_access_key=source.secret_access_key,
+                provider=f'yielded {source.provider}',
+            )
+
+    credentials = Generated('/credentials', ua=ua).credentials()
+    is_ok(credentials.access_key_id, 'AKIDHTTP', 'generator, request')
+    is_ok(credentials.secret_access_key, 'process', 'generator, program')
+    is_ok(credentials.provider, 'generator 0', 'generator, exit code')
+    throws_ok(
+        lambda: Generated('/forbidden', ua=ua).credentials(),
+        re.compile(r'^Cannot get credentials: 404'),
+        'generator, error',
+    )
+
+    source = Generated('/credentials', ua=ua)
+    provider = Yielded(Awaited(source, ua=ua), ua=ua)
+    is_ok(provider.credentials().access_key_id, 'AKIDHTTPAWAITEDYIELDED', 'generator over coroutine over generator')
+    is_ok(provider.cached.provider, 'yielded awaited generator 0', 'providers in their order')
+    ok(source.is_fresh(), 'source cached')
+
+    if sys.platform == 'win32':
+        skip('the reactor watches no pipes on Windows', 2)
+    else:
+        result = wait(Generated('/credentials', ua=ua).credentials_p())
+        is_ok(result['value'].secret_access_key, 'process', 'generator, non-blocking')
+        result = wait(Awaited(Yielded(Generated('/credentials', ua=ua), ua=ua), ua=ua).credentials_p())
+        is_ok(
+            result['value'].access_key_id,
+            'AKIDHTTPYIELDEDAWAITED',
+            'coroutine over generator over generator, non-blocking',
+        )
+
+    class Promised(Pyjo.AWS.Credentials.Provider.object):
+        async def fetch(self):
+            try:
+                await Pyjo.Promise.new()
+            except Exception:
+                return None
+
+    throws_ok(
+        lambda: Promised().credentials(),
+        re.compile(r'^A provider of AWS credentials awaits \w+: only start, run and the steps of a provider'),
+        'promise awaited, not thrown in',
+    )
+    result = wait(Promised().credentials_p())
+    ok(isinstance(result['error'], TypeError), 'promise awaited, non-blocking')
+    like_ok(str(result['error']), re.compile(r'^A provider of AWS credentials awaits'), 'error of the promise')
 
 done_testing()

@@ -42,7 +42,7 @@ Classes
 -------
 """
 
-from .. import Config
+from .. import Config, Credentials
 from . import Environment, Profile, Provider
 
 from collections.abc import Sequence
@@ -107,15 +107,15 @@ class Pyjo_AWS_Credentials_Chain(Provider.object):
             Profile.new(config=self.config, ua=self.ua, refresh=self.refresh),
         ]
 
-    def fetch(self) -> Provider.Steps:
+    async def fetch(self) -> Credentials.object | None:
         """::
 
-            credentials = yield from chain.fetch()
+            credentials = await chain.fetch()
 
         The credentials of the first provider that has them, or ``None``.
         """
         for provider in self.providers:
-            if (credentials := (yield from provider.steps())) is not None:
+            if (credentials := await provider.steps()) is not None:
                 return credentials
         return None
 

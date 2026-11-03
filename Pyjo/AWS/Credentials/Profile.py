@@ -71,10 +71,10 @@ class Pyjo_AWS_Credentials_Profile(Provider.object):
         default.
         """
 
-    def fetch(self) -> Provider.Steps:
+    async def fetch(self) -> Credentials.object | None:
         """::
 
-            credentials = yield from provider.fetch()
+            credentials = await provider.fetch()
 
         The credentials of the profile, or ``None`` of a profile without them.
         """
@@ -103,7 +103,7 @@ class Pyjo_AWS_Credentials_Profile(Provider.object):
             )
 
         if command := settings.get('credential_process'):
-            return (yield from Process.new(command=command, ua=self.ua).fetch())
+            return await Process.new(command=command, ua=self.ua).fetch()
 
         return None
 

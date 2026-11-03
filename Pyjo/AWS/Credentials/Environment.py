@@ -44,10 +44,10 @@ class Pyjo_AWS_Credentials_Environment(Provider.object):
     following new ones.
     """
 
-    def fetch(self) -> Provider.Steps:
+    async def fetch(self) -> Credentials.object | None:
         """::
 
-            credentials = yield from provider.fetch()
+            credentials = await provider.fetch()
 
         The credentials of the environment, or ``None`` without
         ``AWS_ACCESS_KEY_ID`` and ``AWS_SECRET_ACCESS_KEY``.
@@ -70,7 +70,6 @@ class Pyjo_AWS_Credentials_Environment(Provider.object):
             account_id=getenv('AWS_ACCOUNT_ID') or None,
             provider='environment',
         )
-        yield
 
     def is_fresh(self) -> bool:
         """::
