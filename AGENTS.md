@@ -379,6 +379,15 @@ hides the namespace that `extend_path` keeps open, so it does not find
 `Pyjo.AWS` of the checkout. The tests and the documentation import them as
 `Pyjo.AWS.SigV4`, which Python finds through `extend_path`.
 
+The package and the tests take what Pyjoyment has, as the distribution
+depends on it already: the hashes and Base64 of `Pyjo.Util`, as `sha256_sum`
+and `b64url_encode`, and the times of RFC 3339 of `Pyjo.Date`, not
+`hashlib`, `base64` and the formats of `datetime`. `hmac` stays where a
+program needs the bytes of HMAC, as the keys of SigV4 and the nonce of
+RFC 6979, which `Pyjo.Util` gives in hexadecimal only, and so does
+`strftime` of `X-Amz-Date`, a format of ISO 8601 without separators, which
+`Pyjo.Date` does not have.
+
 ## Security
 
 The files of secrets of Pyjoyment are git-ignored in `.gitignore` and denied
