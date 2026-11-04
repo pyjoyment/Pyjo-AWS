@@ -7,6 +7,7 @@ import Pyjo.AWS.Protocol.JSON
 import Pyjo.AWS.Protocol.Query
 import Pyjo.AWS.Protocol.RestJSON
 import Pyjo.AWS.Protocol.RestXML
+import Pyjo.Date
 import Pyjo.Exception
 import Pyjo.File
 import Pyjo.Promise
@@ -16,9 +17,9 @@ from Pyjo.Test import *
 from Pyjoyment.Lite import *
 
 import contextlib
-import datetime
 import os
 import re
+import time
 
 
 # The client of an API of AWS, with its protocols, against an application that serves the endpoints of AWS
@@ -91,7 +92,7 @@ class Static(Pyjo.AWS.Credentials.Provider.object):
             access_key_id='AKIDEXAMPLE',
             secret_access_key='wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
             session_token='token',
-            expiration=datetime.datetime.now(datetime.UTC) + datetime.timedelta(hours=1),
+            expiration=Pyjo.Date.new(time.time() + 3600),
             provider='static',
         )
 

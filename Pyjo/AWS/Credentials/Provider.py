@@ -229,7 +229,7 @@ class Pyjo_AWS_Credentials_Provider(Pyjo.Base.object):
         return credentials
 
 
-def write_cache(path: str, data: dict[str, Any]) -> None:
+def write_cache(path: str | os.PathLike[str], data: dict[str, Any]) -> None:
     """::
 
         Pyjo.AWS.Credentials.Provider.write_cache(path, token)

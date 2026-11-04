@@ -11,7 +11,6 @@ import Pyjo.UserAgent
 from Pyjo.Test import *
 
 import contextlib
-import datetime
 import os
 import re
 import socket
@@ -217,7 +216,7 @@ try:
             credentials = Container().credentials()
             is_ok(credentials.access_key_id, 'AKIDCONTAINER', 'credentials of the full URI')
             is_ok(credentials.session_token, 'container-session', 'session token')
-            is_ok(credentials.expiration, datetime.datetime(2099, 1, 1, tzinfo=datetime.UTC), 'expiration')
+            is_ok(credentials.expiration.to_rfc3339(), '2099-01-01T00:00:00Z', 'expiration')
             is_ok(credentials.account_id, '123456789012', 'account')
             is_ok(credentials.provider, 'container', 'provider')
             is_ok(calls()[-1]['authorization'], None, 'no authorization')
@@ -280,7 +279,7 @@ try:
             credentials = InstanceMetadata().credentials()
             is_ok(credentials.access_key_id, 'AKIDIMDS', 'credentials of the role')
             is_ok(credentials.session_token, 'imds-session', 'session token')
-            is_ok(credentials.expiration, datetime.datetime(2099, 1, 1, tzinfo=datetime.UTC), 'expiration')
+            is_ok(credentials.expiration.to_rfc3339(), '2099-01-01T00:00:00Z', 'expiration')
             is_ok(credentials.provider, 'imds', 'provider')
             requests = calls()
             is_ok(

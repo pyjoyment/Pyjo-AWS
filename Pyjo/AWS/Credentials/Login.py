@@ -48,6 +48,7 @@ Classes
 
 import Pyjo.Date
 import Pyjo.Exception
+import Pyjo.File
 import Pyjo.JSON
 
 from Pyjo.Util import getenv, sha256_sum
@@ -112,17 +113,17 @@ class Pyjo_AWS_Credentials_Login(Provider.object):
         """
 
         directory = cache_dir or getenv('AWS_LOGIN_CACHE_DIRECTORY') or '~/.aws/login/cache'
-        self.cache_dir = os.path.expanduser(os.path.expandvars(directory))
+        self.cache_dir = Pyjo.File.new(os.path.expandvars(directory)).expanduser()
         """::
 
             path = provider.cache_dir
 
-        The directory of the cache of the sessions, of the
-        ``AWS_LOGIN_CACHE_DIRECTORY`` environment variable, or
-        ``~/.aws/login/cache`` of the AWS CLI by default.
+        The :mod:`Pyjo.File` object of the directory of the cache of the
+        sessions, of the ``AWS_LOGIN_CACHE_DIRECTORY`` environment variable,
+        or ``~/.aws/login/cache`` of the AWS CLI by default.
         """
 
-    def cache_file(self, session: str) -> str:
+    def cache_file(self, session: str) -> Pyjo.File.object:
         """::
 
             path = provider.cache_file('arn:aws:sts::123456789012:assumed-role/Admin/alice')
@@ -130,7 +131,7 @@ class Pyjo_AWS_Credentials_Login(Provider.object):
         The file of a session in :attr:`cache_dir`, of the SHA-256 of its
         name, as the AWS CLI names it.
         """
-        return os.path.join(self.cache_dir, sha256_sum(session.encode()) + '.json')
+        return self.cache_dir.child(sha256_sum(session.encode()) + '.json')
 
     async def fetch(self) -> Credentials.object | None:
         """::
@@ -242,10 +243,9 @@ def _segment(value: dict[str, Any]) -> str:
 
 # The token of the cache, with the fields that botocore requires, of which the key and the refresh token are needed only
 # once the credentials expire
-def _load(session: str, path: str, login: str) -> dict[str, Any]:
+def _load(session: str, path: Pyjo.File.object, login: str) -> dict[str, Any]:
     try:
-        with open(path, 'rb') as f:
-            data: Any = Pyjo.JSON.decode_json(f.read())
+        data: Any = Pyjo.JSON.decode_json(path.slurp())
     except FileNotFoundError:
         raise Pyjo.Exception.new(f'No login session {session} of AWS in {path}: {login}') from None
     except Exception as e:

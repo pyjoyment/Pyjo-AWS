@@ -38,7 +38,7 @@ import Pyjo.Base
 import Pyjo.Date
 import Pyjo.Exception
 
-import datetime
+import time
 
 
 class Pyjo_AWS_Credentials(Pyjo.Base.object):
@@ -53,7 +53,7 @@ class Pyjo_AWS_Credentials(Pyjo.Base.object):
         access_key_id: str,
         secret_access_key: str,
         session_token: str | None = None,
-        expiration: datetime.datetime | None = None,
+        expiration: Pyjo.Date.object | None = None,
         account_id: str | None = None,
         provider: str | None = None,
     ) -> None:
@@ -92,8 +92,8 @@ class Pyjo_AWS_Credentials(Pyjo.Base.object):
 
             expiration = credentials.expiration
 
-        The time when temporary credentials expire, with its time zone, or
-        ``None`` for credentials that do not expire.
+        The :mod:`Pyjo.Date` object of the time when temporary credentials
+        expire, or ``None`` for credentials that do not expire.
         """
 
         self.account_id = account_id
@@ -118,7 +118,7 @@ class Pyjo_AWS_Credentials(Pyjo.Base.object):
         # Without the secrets, which a log or a traceback would show
         return f'<Credentials access_key_id={self.access_key_id!r} provider={self.provider!r}>'
 
-    def expires_in(self, now: datetime.datetime | None = None) -> float | None:
+    def expires_in(self, now: Pyjo.Date.object | float | None = None) -> float | None:
         """::
 
             seconds = credentials.expires_in()
@@ -128,21 +128,21 @@ class Pyjo_AWS_Credentials(Pyjo.Base.object):
         """
         if self.expiration is None:
             return None
-        return (self.expiration - (now or datetime.datetime.now(datetime.UTC))).total_seconds()
+        return float(self.expiration) - (time.time() if now is None else float(now))
 
 
-def parse_time(value: str) -> datetime.datetime:
+def parse_time(value: str) -> Pyjo.Date.object:
     """::
 
         expiration = Pyjo.AWS.Credentials.parse_time('2026-11-03T12:00:00Z')
 
-    A time of RFC 3339, as the expiration of credentials, with its time zone,
-    UTC when it has none.
+    A :mod:`Pyjo.Date` object of a time of RFC 3339, as the expiration of
+    credentials, in UTC when it has no time zone.
     """
     date = Pyjo.Date.new(value.strip())
     if date.epoch is None:
         raise Pyjo.Exception.new(f'Invalid time of the expiration of credentials of AWS: {value!r}')
-    return date.to_datetime()
+    return date
 
 
 new = Pyjo_AWS_Credentials.new

@@ -56,6 +56,7 @@ Classes
 
 import Pyjo.Date
 import Pyjo.Exception
+import Pyjo.File
 import Pyjo.JSON
 
 from Pyjo.Util import sha1_sum
@@ -64,8 +65,6 @@ from .. import Client, Config, Credentials
 from ..Protocol import RestJSON
 from . import Provider
 
-import datetime
-import os
 import time
 
 from typing import Any, cast
@@ -115,16 +114,17 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         by default.
         """
 
-        self.cache_dir = os.path.expanduser(cache_dir or '~/.aws/sso/cache')
+        self.cache_dir = Pyjo.File.new(cache_dir or '~/.aws/sso/cache').expanduser()
         """::
 
             path = provider.cache_dir
 
-        The directory of the cache of the tokens, ``~/.aws/sso/cache`` of the
+        The :mod:`Pyjo.File` object of the directory of the cache of the
+        tokens, ``~/.aws/sso/cache`` of the
         AWS CLI by default.
         """
 
-    def cache_file(self, key: str) -> str:
+    def cache_file(self, key: str) -> Pyjo.File.object:
         """::
 
             path = provider.cache_file('company')
@@ -134,7 +134,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         the start URL of a legacy profile, in :attr:`cache_dir`, of the SHA-1
         of the key, as the AWS CLI names it.
         """
-        return os.path.join(self.cache_dir, sha1_sum(key.encode()) + '.json')
+        return self.cache_dir.child(sha1_sum(key.encode()) + '.json')
 
     async def fetch(self) -> Credentials.object | None:
         """::
@@ -195,9 +195,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
             access_key_id=fields['accessKeyId'],
             secret_access_key=fields['secretAccessKey'],
             session_token=fields.get('sessionToken') or None,
-            expiration=(
-                Pyjo.Date.new(expiration / 1000).to_datetime() if isinstance(expiration, (int, float)) else None
-            ),
+            expiration=Pyjo.Date.new(expiration / 1000) if isinstance(expiration, (int, float)) else None,
             account_id=cast(str, account_id),
             provider='sso',
         )
@@ -220,8 +218,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         path = self.cache_file(key)
         login = f'aws sso login --profile {self.profile}'
         try:
-            with open(path, 'rb') as f:
-                data: Any = Pyjo.JSON.decode_json(f.read())
+            data: Any = Pyjo.JSON.decode_json(path.slurp())
         except FileNotFoundError:
             raise Pyjo.Exception.new(f'No token of the SSO of {key} of AWS in {path}: {login}') from None
         except Exception as e:
@@ -230,8 +227,8 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         if not cached.get('accessToken') or not cached.get('expiresAt'):
             raise Pyjo.Exception.new(f'Invalid token of the SSO of {key} of AWS in {path}: {login}')
 
-        now = datetime.datetime.now(datetime.UTC)
-        expires_in = (Credentials.parse_time(cached['expiresAt']) - now).total_seconds()
+        now = time.time()
+        expires_in = float(Credentials.parse_time(cached['expiresAt'])) - now
         if expires_in > self.refresh:
             return cached['accessToken']
 
@@ -242,7 +239,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
             and cached.get('clientId')
             and cached.get('clientSecret')
             and isinstance(registered, str)
-            and Credentials.parse_time(registered) > now
+            and float(Credentials.parse_time(registered)) > now
         ):
             call = RestJSON.new(
                 'POST',

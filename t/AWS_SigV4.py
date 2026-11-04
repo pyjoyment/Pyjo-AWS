@@ -9,7 +9,6 @@ import Pyjo.UserAgent
 from Pyjo.Test import *
 from Pyjoyment.Lite import *
 
-import datetime
 import os
 import re
 
@@ -81,7 +80,7 @@ for case in SUITE.list(dir=True):
 with subtest('Dates'):
     for name, date in (
         ('Pyjo.Date', DATE),
-        ('datetime', datetime.datetime(2015, 8, 30, 14, 36, tzinfo=datetime.timezone(datetime.timedelta(hours=2)))),
+        ('another time zone', Pyjo.Date.new('2015-08-30T14:36:00+02:00')),
         ('epoch', DATE.epoch),
     ):
         req = signer().sign(request('GET', 'https://example.amazonaws.com/'), date)
