@@ -10,4 +10,5 @@
     :maxdepth: 1
     :caption: API
 
+    api/Pyjo_AWS_Config
     api/Pyjo_AWS_SigV4

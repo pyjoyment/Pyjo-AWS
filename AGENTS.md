@@ -42,6 +42,29 @@ is, which HTTP cannot, so the test skips those cases, and the one of a
 session token that is not signed, of AWS IoT, which `Pyjo.AWS.SigV4` does
 not have.
 
+## The Shared Files
+
+`Pyjo.AWS.Config` reads `~/.aws/config` and `~/.aws/credentials` as botocore
+does, which the AWS CLI is made of, as the reference of the format: the
+`RawConfigParser` of `configparser`, whose names of the settings are in lower
+case, so that `AWS_ACCESS_KEY_ID =` of a hand-written file of the credentials
+works, and whose value of a setting without one on its line is the indented
+lines below it, which `_subsection` turns into a `dict`, as `s3 =`. A section
+that is not unique is merged, as `strict=False`, and `default_section` is a
+name that no file has, so that a section `[DEFAULT]` is not the defaults of
+the others. In the configuration file, a profile is `[profile name]` or
+`[default]`, and `[profile default]` comes over `[default]`; a section of
+another name is not a profile, as `[dev]`, which the file of the credentials
+names so. The settings of the file of the credentials come over those of the
+configuration file.
+
+The endpoint of a service is the one that the SDKs of AWS resolve from the
+environment and the profile, in their order: `AWS_ENDPOINT_URL_<SERVICE>`,
+the section `services` of the profile, `AWS_ENDPOINT_URL`, and
+`endpoint_url` of the profile. The key of a service is its ID, as
+`SSO OIDC`, with `_` in the place of the spaces and the hyphens, in upper
+case in the environment and in lower case in the section `services`.
+
 ## Imports of the Package
 
 The modules of the distribution import the package and each other relatively,
