@@ -392,10 +392,9 @@ hides the namespace that `extend_path` keeps open, so it does not find
 The package and the tests take what Pyjoyment has, as the distribution
 depends on it already: the hashes, HMAC and Base64 of `Pyjo.Util`, as
 `sha256_sum`, `hmac_sha256_bytes` of the keys of SigV4 and of the nonce of
-RFC 6979, and `b64url_encode`, and the times of RFC 3339 of `Pyjo.Date`, not
-`hashlib`, `hmac`, `base64` and the formats of `datetime`. `strftime` stays,
-of `X-Amz-Date`, a format of ISO 8601 without separators, which `Pyjo.Date`
-does not have.
+RFC 6979, and `b64url_encode`, and the times of `Pyjo.Date`, of RFC 3339 and
+of the format of `X-Amz-Date`, `f'{date:%Y%m%dT%H%M%SZ}'`, not `hashlib`,
+`hmac`, `base64` and the formats of `datetime`.
 
 ## Security
 

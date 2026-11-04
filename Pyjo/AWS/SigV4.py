@@ -41,6 +41,7 @@ Classes
 """
 
 import Pyjo.Base
+import Pyjo.Date
 import Pyjo.Exception
 import Pyjo.Message.Request
 
@@ -223,15 +224,17 @@ class Pyjo_AWS_SigV4(Pyjo.Base.object):
         return f'{self._date(req)[:8]}/{self.region}/{self.service}/aws4_request'
 
     def sign(
-        self, req: Pyjo.Message.Request.object, date: datetime.datetime | None = None
+        self, req: Pyjo.Message.Request.object, date: Pyjo.Date.object | datetime.datetime | float | None = None
     ) -> Pyjo.Message.Request.object:
         """::
 
             req = signer.sign(req)
+            req = signer.sign(req, Pyjo.Date.new('2015-08-30T12:36:00Z'))
             req = signer.sign(req, datetime.datetime(2015, 8, 30, 12, 36, tzinfo=datetime.UTC))
 
-        Sign a request at a date, now by default: set its headers ``Host``,
-        ``X-Amz-Date``, ``X-Amz-Security-Token`` with a
+        Sign a request at a date of :mod:`Pyjo.Date`, a
+        :class:`datetime.datetime` or the epoch, now by default: set its
+        headers ``Host``, ``X-Amz-Date``, ``X-Amz-Security-Token`` with a
         :attr:`session_token` and ``X-Amz-Content-Sha256`` with
         :attr:`content_sha256`, and its header ``Authorization``.
         """
@@ -241,8 +244,8 @@ class Pyjo_AWS_SigV4(Pyjo.Base.object):
         headers = req.headers
         if headers.host is None:
             headers.host = req.url.host_port or ''
-        date = (date or datetime.datetime.now(datetime.UTC)).astimezone(datetime.UTC)
-        headers.header('X-Amz-Date', date.strftime('%Y%m%dT%H%M%SZ'))
+        date = date if isinstance(date, Pyjo.Date.object) else Pyjo.Date.new(date)
+        headers.header('X-Amz-Date', f'{date:%Y%m%dT%H%M%SZ}')
         if self.session_token is not None:
             headers.header('X-Amz-Security-Token', self.session_token)
         if self.content_sha256 and headers.header('X-Amz-Content-Sha256') is None:

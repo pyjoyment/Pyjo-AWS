@@ -1,5 +1,6 @@
 import Pyjo.AWS.Credentials
 import Pyjo.AWS.SigV4
+import Pyjo.Date
 import Pyjo.File
 import Pyjo.JSON
 import Pyjo.Message.Request
@@ -26,7 +27,7 @@ SKIP = {
     'post-sts-header-after': 'a session token that is not signed',
 }
 
-DATE = datetime.datetime(2015, 8, 30, 12, 36, tzinfo=datetime.UTC)
+DATE = Pyjo.Date.new('2015-08-30T12:36:00Z')
 
 
 def parse(raw):
@@ -68,7 +69,7 @@ for case in SUITE.list(dir=True):
             normalize_path=context['normalize'],
             content_sha256=context['sign_body'],
         )
-        sigv4.sign(req, datetime.datetime.fromisoformat(context['timestamp']))
+        sigv4.sign(req, Pyjo.Date.new(context['timestamp']))
         is_ok(
             sigv4.canonical_request(req), case.child('header-canonical-request.txt').slurp('UTF-8'), 'canonical request'
         )
@@ -76,6 +77,17 @@ for case in SUITE.list(dir=True):
         is_ok(sigv4.signature(req), case.child('header-signature.txt').slurp('UTF-8'), 'signature')
         signed = parse(case.child('header-signed-request.txt').slurp())
         is_ok(req.headers.authorization, signed.headers.authorization, 'header Authorization')
+
+with subtest('Dates'):
+    for name, date in (
+        ('Pyjo.Date', DATE),
+        ('datetime', datetime.datetime(2015, 8, 30, 14, 36, tzinfo=datetime.timezone(datetime.timedelta(hours=2)))),
+        ('epoch', DATE.epoch),
+    ):
+        req = signer().sign(request('GET', 'https://example.amazonaws.com/'), date)
+        is_ok(req.headers.header('X-Amz-Date'), '20150830T123600Z', f'X-Amz-Date of {name}')
+    req = signer().sign(request('GET', 'https://example.amazonaws.com/'))
+    like_ok(req.headers.header('X-Amz-Date'), re.compile(r'^\d{8}T\d{6}Z$'), 'X-Amz-Date of now')
 
 with subtest('Credentials of the environment'):
     environ = dict(os.environ)

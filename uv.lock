@@ -502,7 +502,7 @@ wheels = [
 
 [[package]]
 name = "pyjo-aws"
-version = "0.2.1.dev1"
+version = "0.1.0.dev1"
 source = { editable = "." }
 dependencies = [
     { name = "pyjoyment" },
@@ -534,7 +534,7 @@ docs = [{ name = "sphinx", marker = "python_full_version >= '3.14'", specifier =
 [[package]]
 name = "pyjoyment"
 version = "0.2.1.dev1"
-source = { git = "https://github.com/pyjoyment/Pyjoyment?branch=main#ad4efd5c933156896f3bb869f1d7eb1decdd6a4c" }
+source = { git = "https://github.com/pyjoyment/Pyjoyment?branch=main#3479e6af467e82ebe60ec47307457b74f66dc3f9" }
 
 [[package]]
 name = "requests"
