@@ -390,11 +390,13 @@ credential_source = Ec2InstanceMetadata
             AWS_EC2_METADATA_SERVICE_ENDPOINT=base,
         ):
             state()
+            # The user agent of STS keeps no connection to the server, which the exit of the interpreter would not
+            # close, as ResourceWarning reports
             config = Pyjo.AWS.Config.new(profile='container')
-            credentials = Pyjo.AWS.Credentials.Profile.new(config=config).credentials()
+            credentials = Pyjo.AWS.Credentials.Profile.new(config=config, ua=control).credentials()
             is_ok(credentials.access_key_id, 'AKIDROLEOFAKIDCONTAINER', 'role of credential_source EcsContainer')
             config = Pyjo.AWS.Config.new(profile='instance')
-            credentials = Pyjo.AWS.Credentials.Profile.new(config=config).credentials()
+            credentials = Pyjo.AWS.Credentials.Profile.new(config=config, ua=control).credentials()
             is_ok(credentials.access_key_id, 'AKIDROLEOFAKIDIMDS', 'role of credential_source Ec2InstanceMetadata')
 finally:
     server.terminate()
