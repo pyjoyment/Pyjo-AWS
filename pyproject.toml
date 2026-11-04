@@ -36,7 +36,8 @@ docs = ["sphinx>=9.2.0"]
 [tool.uv.dependency-groups]
 docs = { requires-python = ">=3.14" }
 
-# Pyjoyment of Git until its release 0.2.1, whose annotations of Pyjo.DOM pyright strict takes (pyjoyment/Pyjoyment#501)
+# Pyjoyment of Git until its release 0.2.1, whose annotations of Pyjo.DOM pyright strict takes (pyjoyment/Pyjoyment#501), and
+# whose hmac_sha256_bytes of Pyjo.Util SigV4 and ECDSA use (pyjoyment/Pyjoyment#524)
 [tool.uv.sources]
 Pyjoyment = { git = "https://github.com/pyjoyment/Pyjoyment", branch = "main" }
 
