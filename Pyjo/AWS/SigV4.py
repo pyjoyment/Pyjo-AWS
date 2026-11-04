@@ -44,12 +44,11 @@ import Pyjo.Base
 import Pyjo.Exception
 import Pyjo.Message.Request
 
-from Pyjo.Util import getenv, hmac_sha256_sum, sha256_sum, url_escape
+from Pyjo.Util import getenv, hmac_sha256_bytes, hmac_sha256_sum, sha256_sum, url_escape
 
 from . import Credentials
 
 import datetime
-import hmac
 
 
 _ALGORITHM = 'AWS4-HMAC-SHA256'
@@ -267,10 +266,8 @@ class Pyjo_AWS_SigV4(Pyjo.Base.object):
         if self.secret_access_key is None:
             raise Pyjo.Exception.new('No credentials of AWS')
         key = ('AWS4' + self.secret_access_key).encode()
-        # The key of the scope, which each part of it derives from the one before, as the bytes of an HMAC, which
-        # Pyjo.Util gives only in hexadecimal
         for part in (self._date(req)[:8], self.region, self.service, 'aws4_request'):
-            key = hmac.digest(key, part.encode(), 'sha256')
+            key = hmac_sha256_bytes(part.encode(), key)
         return hmac_sha256_sum(self.string_to_sign(req).encode(), key)
 
     def string_to_sign(self, req: Pyjo.Message.Request.object) -> str:

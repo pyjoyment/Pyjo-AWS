@@ -390,13 +390,12 @@ hides the namespace that `extend_path` keeps open, so it does not find
 `Pyjo.AWS.SigV4`, which Python finds through `extend_path`.
 
 The package and the tests take what Pyjoyment has, as the distribution
-depends on it already: the hashes and Base64 of `Pyjo.Util`, as `sha256_sum`
-and `b64url_encode`, and the times of RFC 3339 of `Pyjo.Date`, not
-`hashlib`, `base64` and the formats of `datetime`. `hmac` stays where a
-program needs the bytes of HMAC, as the keys of SigV4 and the nonce of
-RFC 6979, which `Pyjo.Util` gives in hexadecimal only, and so does
-`strftime` of `X-Amz-Date`, a format of ISO 8601 without separators, which
-`Pyjo.Date` does not have.
+depends on it already: the hashes, HMAC and Base64 of `Pyjo.Util`, as
+`sha256_sum`, `hmac_sha256_bytes` of the keys of SigV4 and of the nonce of
+RFC 6979, and `b64url_encode`, and the times of RFC 3339 of `Pyjo.Date`, not
+`hashlib`, `hmac`, `base64` and the formats of `datetime`. `strftime` stays,
+of `X-Amz-Date`, a format of ISO 8601 without separators, which `Pyjo.Date`
+does not have.
 
 ## Security
 
@@ -418,7 +417,11 @@ is not released yet would be its Git repository in `[tool.uv.sources]` of
 `pyproject.toml`, until its release, and not a path to the checkout next to
 this one: uv applies the sources of a dependency of Git, so whoever installs
 the distribution from Git would get a subdirectory of this repository that
-does not exist. The tests lay the checkout next to this one over it with
+does not exist. The lowest version is then the one of Git, as `0.2.1.dev1`,
+which PyPI does not have, so that an installation of PyPI fails to resolve it
+rather than to import what the release has not, and the workflow Build
+installs the wheel with the Pyjoyment of `uv.lock`, of `uv export`, as the
+wheel does not name the source. The tests lay the checkout next to this one over it with
 `--with-editable`, so that they test what is there:
 
 ```sh

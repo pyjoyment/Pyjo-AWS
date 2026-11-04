@@ -44,10 +44,9 @@ Classes
 import Pyjo.Base
 import Pyjo.Exception
 
-from Pyjo.Util import b64_decode, b64url_encode, sha256_bytes
+from Pyjo.Util import b64_decode, b64url_encode, hmac_sha256_bytes, sha256_bytes
 
 import functools
-import hmac
 import importlib
 
 from typing import Any, Literal, cast
@@ -248,18 +247,17 @@ def _bytes(value: int) -> bytes:
 
 
 # The signature of a digest of SHA-256, of the nonce of RFC 6979, section 3.2, as the order of P-256 and the digest have
-# 256 bits each, so that a value of HMAC is a candidate of the nonce as it is, of the bytes of HMAC, which Pyjo.Util
-# gives only in hexadecimal
+# 256 bits each, so that a value of HMAC is a candidate of the nonce as it is
 def _sign(d: int, digest: bytes) -> bytes:
     e = int.from_bytes(digest)
     x, h = _bytes(d), _bytes(e % N)
     v, k = b'\x01' * 32, b'\x00' * 32
-    k = hmac.digest(k, v + b'\x00' + x + h, 'sha256')
-    v = hmac.digest(k, v, 'sha256')
-    k = hmac.digest(k, v + b'\x01' + x + h, 'sha256')
-    v = hmac.digest(k, v, 'sha256')
+    k = hmac_sha256_bytes(v + b'\x00' + x + h, k)
+    v = hmac_sha256_bytes(v, k)
+    k = hmac_sha256_bytes(v + b'\x01' + x + h, k)
+    v = hmac_sha256_bytes(v, k)
     while True:
-        v = hmac.digest(k, v, 'sha256')
+        v = hmac_sha256_bytes(v, k)
         nonce = int.from_bytes(v)
         if 0 < nonce < N:
             point = cast(tuple[int, int], _multiply(nonce, G))
@@ -267,8 +265,8 @@ def _sign(d: int, digest: bytes) -> bytes:
             s = pow(nonce, -1, N) * (e + r * d) % N
             if r and s:
                 return _bytes(r) + _bytes(s)
-        k = hmac.digest(k, v + b'\x00', 'sha256')
-        v = hmac.digest(k, v, 'sha256')
+        k = hmac_sha256_bytes(v + b'\x00', k)
+        v = hmac_sha256_bytes(v, k)
 
 
 def _on_curve(point: Point) -> bool:
