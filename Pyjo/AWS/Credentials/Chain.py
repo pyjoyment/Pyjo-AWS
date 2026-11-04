@@ -36,6 +36,15 @@ default:
 #. the instance metadata of EC2, of
    :mod:`Pyjo.AWS.Credentials.InstanceMetadata`.
 
+A profile of :mod:`Pyjo.AWS.Config` of the argument ``profile``, as of the
+option ``--profile`` of the AWS CLI, skips the first two, so that the keys of
+``AWS_ACCESS_KEY_ID`` and the role of ``AWS_ROLE_ARN`` of the environment do
+not come over the profile, as botocore has it, whose ``AWS_PROFILE`` alone
+does not: ::
+
+    # The session of aws login of the profile, with AWS_ACCESS_KEY_ID of the environment too
+    chain = Pyjo.AWS.Credentials.Chain.new(config=Pyjo.AWS.Config.new(profile='console'))
+
 A provider that is not configured passes on to the next one, and the error
 of one that is configured ends the chain, as the SDKs of AWS do, so that a
 broken profile is not hidden by other credentials.
@@ -109,11 +118,18 @@ class Pyjo_AWS_Credentials_Chain(Provider.object):
         New providers of the SDKs of AWS, with :attr:`config` and the user
         agent of the chain, in their order, but the container and the
         instance metadata, which have user agents of their own, with short
-        timeouts.
+        timeouts, and without the environment and the web identity of the
+        environment for an
+        :attr:`~Pyjo.AWS.Config.Pyjo_AWS_Config.explicit_profile`.
         """
+        providers: list[Provider.object] = []
+        if not self.config.explicit_profile:
+            providers += [
+                Environment.new(ua=self.ua, refresh=self.refresh),
+                WebIdentity.new(config=self.config, ua=self.ua, refresh=self.refresh),
+            ]
         return [
-            Environment.new(ua=self.ua, refresh=self.refresh),
-            WebIdentity.new(config=self.config, ua=self.ua, refresh=self.refresh),
+            *providers,
             Profile.new(config=self.config, ua=self.ua, refresh=self.refresh),
             Container.new(refresh=self.refresh),
             InstanceMetadata.new(config=self.config, refresh=self.refresh),

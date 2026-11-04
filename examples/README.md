@@ -27,6 +27,10 @@ environment variables `S3_BUCKET`, `AWS_PROFILE`, `AWS_REGION` and
 uv run python examples/s3.py --profile myprofile --bucket mybucket daemon
 ```
 
+The profile of `--profile` comes over the keys of `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY` of the environment, as the option `--profile` of the
+AWS CLI does, and the one of `AWS_PROFILE` does not.
+
 A profile of SSO needs a token of `aws sso login --profile myprofile` first,
 and a profile of a session of the console `aws login --profile myprofile`.
 

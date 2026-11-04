@@ -20,6 +20,7 @@ __DATA__
 """
 
 import Pyjo.AWS.Client
+import Pyjo.AWS.Config
 import Pyjo.AWS.Error
 import Pyjo.AWS.Protocol.RestXML
 import Pyjo.Exception
@@ -34,12 +35,13 @@ import threading
 
 
 # The options before the command, with the names of the AWS CLI, which set the environment variables that the
-# application and Pyjo.AWS read: python s3.py --profile myprofile --bucket mybucket daemon
-getopt(
+# application and Pyjo.AWS read, but the profile, which comes over the credentials of the environment, as --profile of
+# the AWS CLI does, and AWS_PROFILE does not: python s3.py --profile myprofile --bucket mybucket daemon
+opts = getopt(
     {
         'bucket=s': Pyjo.GetOpt.env('S3_BUCKET'),
         'endpoint-url=s': Pyjo.GetOpt.env('AWS_ENDPOINT_URL'),
-        'profile=s': Pyjo.GetOpt.env('AWS_PROFILE'),
+        'profile=s': None,
         'region=s': Pyjo.GetOpt.env('AWS_REGION'),
     },
     pass_through=True,
@@ -61,7 +63,7 @@ local = threading.local()
 
 def s3():
     if not hasattr(local, 's3'):
-        local.s3 = Pyjo.AWS.Client.new(service='s3')
+        local.s3 = Pyjo.AWS.Client.new(service='s3', config=Pyjo.AWS.Config.new(profile=opts.profile))
     return local.s3
 
 
