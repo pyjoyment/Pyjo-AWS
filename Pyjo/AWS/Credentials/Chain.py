@@ -26,6 +26,8 @@ first of its providers that has them, in the order of the SDKs of AWS by
 default:
 
 #. the environment, of :mod:`Pyjo.AWS.Credentials.Environment`,
+#. the role of a web identity of the environment, of
+   :mod:`Pyjo.AWS.Credentials.WebIdentity`,
 #. the profile of the shared files, of :mod:`Pyjo.AWS.Credentials.Profile`,
    with its SSO, its ``credential_process`` or its keys.
 
@@ -44,7 +46,7 @@ Classes
 """
 
 from .. import Config, Credentials
-from . import Environment, Profile, Provider
+from . import Environment, Profile, Provider, WebIdentity
 
 from collections.abc import Sequence
 from typing import Any
@@ -102,9 +104,10 @@ class Pyjo_AWS_Credentials_Chain(Provider.object):
         New providers of the SDKs of AWS, with :attr:`config` and the user
         agent of the chain, in their order.
         """
-        # TODO: web identity of the environment, the container and IMDS
+        # TODO: the container and IMDS
         return [
             Environment.new(ua=self.ua, refresh=self.refresh),
+            WebIdentity.new(config=self.config, ua=self.ua, refresh=self.refresh),
             Profile.new(config=self.config, ua=self.ua, refresh=self.refresh),
         ]
 
