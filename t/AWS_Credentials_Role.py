@@ -150,7 +150,7 @@ def response(c, action, account, role, session):
         data=(
             f'<{action}Response><{action}Result><Credentials>'
             f'<AccessKeyId>AKID{role.upper()}</AccessKeyId><SecretAccessKey>secret</SecretAccessKey>'
-            f'<SessionToken>token-{role}</SessionToken><Expiration>2026-11-04T12:00:00Z</Expiration>'
+            f'<SessionToken>token-{role}</SessionToken><Expiration>2099-01-01T00:00:00Z</Expiration>'
             f'</Credentials><AssumedRoleUser><Arn>arn:aws:sts::{account}:assumed-role/{role}/{session}</Arn>'
             f'</AssumedRoleUser></{action}Result></{action}Response>'
         ).encode()
@@ -207,7 +207,7 @@ with subtest('AssumeRole'):
         credentials = provider.credentials()
         is_ok(credentials.access_key_id, 'AKIDDEPLOY', 'credentials of the role')
         is_ok(credentials.session_token, 'token-deploy', 'session token')
-        is_ok(credentials.expiration, datetime.datetime(2026, 11, 4, 12, tzinfo=datetime.UTC), 'expiration')
+        is_ok(credentials.expiration, datetime.datetime(2099, 1, 1, tzinfo=datetime.UTC), 'expiration')
         is_ok(credentials.account_id, '123456789012', 'account of the ARN of the user')
         is_ok(credentials.provider, 'assume-role', 'provider')
         is_ok(calls[-1]['signer'], 'AKIDSOURCE', 'signed with the source')
