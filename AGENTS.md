@@ -65,39 +65,51 @@ the section `services` of the profile, `AWS_ENDPOINT_URL`, and
 `SSO OIDC`, with `_` in the place of the spaces and the hyphens, in upper
 case in the environment and in lower case in the section `services`.
 
+## The Steps
+
+`Pyjo.AWS.Steps` runs a coroutine that awaits a `Request`, a `Command` or
+other `Steps`, whose `__await__` yields the operation itself, and gets the
+result back, or the exception of its error thrown in. No event loop runs the
+coroutine: `run` drives it with `send` and `throw`, blocking, with `start`
+of the user agent and `subprocess.run`, and `run_p` non-blocking, with
+`start_p` and `run_p` of `Pyjo.IOLoop.ChildProcess`, so that the code of a
+provider of credentials and of a call of the client is written once for
+both modes. A coroutine that an event loop runs would not do: a blocking
+call cannot run the event loop that is running already, where a blocking
+request of the user agent runs on an event loop of its own.
+
+So the coroutine awaits nothing else, not a `Pyjo.Promise` and not a future
+of asyncio, whose `__await__` yields what only an event loop knows, the
+promise itself on the reactor of Pyjo and a future on the one of asyncio.
+The driver closes the coroutine and raises a `TypeError`, which it does not
+throw into the coroutine, where the `except` of the errors of a connection
+would hide it.
+
+A generator that yields the operations runs too, as Python drives both
+alike: `Steps` has `__await__` and `__iter__` of the same generator, so that
+`await` and `yield from` take the steps of either kind. The code of the
+package is coroutines, as pyright knows the types of what `await` gives
+back, which `yield` leaves as `Any`. `Steps` is generic in what the steps
+return, and `Steps.new` of `Pyjo.Base` loses its parameter, so the package
+calls the class itself, `Steps.Steps(...)`.
+
+A `Request` names the user agent that starts it, or the one of `run` is
+taken: the client signs its request in the event `start` of its own user
+agent, which a provider of credentials with a user agent of its own would
+not emit otherwise, and the request would go out unsigned, without an error.
+
 ## The Credentials
 
 A provider of `Pyjo.AWS.Credentials.Provider` gets its credentials in
-`fetch`, a coroutine that awaits what it waits for, a `Request` of `start`
-or a `Command` of `run`, whose `__await__` yields the operation itself, and
-gets the result back, or the exception of its error thrown in, and returns
-the credentials. No event loop runs the coroutine: `_run` drives it with
-`send` and `throw`, blocking, with `start` of the user agent and
-`subprocess.run`, and `_run_p` non-blocking, with `start_p` and `run_p` of
-`Pyjo.IOLoop.ChildProcess`, so that the code of a provider is written once
-for `credentials` and `credentials_p`, and a provider that needs the
+`fetch`, a coroutine of `Pyjo.AWS.Steps`, which awaits `start` and `run` of
+the provider, and returns the credentials, so that the provider is written
+once for `credentials` and `credentials_p`, and a provider that needs the
 credentials of another, as a role those of its source, awaits its `steps`,
-cached as its own. A coroutine that an event loop runs would not do: a
-blocking call cannot run the event loop that is running already, where a
-blocking request of the user agent runs on an event loop of its own.
-
-So a provider awaits nothing else, not a `Pyjo.Promise` and not a future of
-asyncio, whose `__await__` yields what only an event loop knows, the promise
-itself on the reactor of Pyjo and a future on the one of asyncio. The driver
-closes the coroutine and raises a `TypeError`, which it does not throw into
-the coroutine, where the `except` of the errors of a connection would hide
-it.
-
-`fetch` may be a generator too, which yields the operations, as Python
-drives both alike. `steps` gives a `Steps`, whose `__await__` and `__iter__`
-are the same generator, so that `await` and `yield from` take the steps of a
-provider of either kind. The providers of the package are coroutines, as
-pyright knows the types of what `await` of `start` and `run` gives back,
-which `yield` leaves as `Any`.
+cached as its own. `fetch` may be a generator too.
 
 The error of a connection, which `start_p` rejects with a string and `start`
 leaves in `error` of the transaction without a `code`, is thrown into the
-generator as one `Pyjo.Exception`, with the method and the URL, and so is a
+coroutine as one `Pyjo.Exception`, with the method and the URL, and so is a
 program that cannot be run, so that a provider handles both modes alike. A
 response with an error status is a transaction as any other: the provider
 reads its status.
@@ -113,6 +125,43 @@ gets them the same promise, so that a burst of requests gets them once.
 `Pyjo.AWS.Credentials.Environment` never keeps them, as the environment may
 change. `__repr__` of the credentials has no secret, as a log or a traceback
 shows it.
+
+## The Client
+
+`Pyjo.AWS.Client` calls an API with a call of `Pyjo.AWS.Protocol`, an
+object of the protocol, not a method of the client of each protocol: the
+call builds the transaction for the endpoint and reads the result of its
+response or the error, so that a protocol is a class that is tested and
+replaced alone, and the client has `call`, `call_p` and `steps`, which a
+provider of credentials awaits, as a role of STS does. Without the models of
+the APIs, which the SDKs of AWS are generated from, the call takes the names
+and the structure of the API as its documentation has them, and gives the
+result as the response has it: the JSON, or a `Pyjo.DOM` of the XML, with
+the semantics of XML, whose tags keep their case.
+
+`Pyjo.AWS.Protocol` is generic in its result, as `Protocol.object[T]`, so
+that `call` of a `Query` gives a `Pyjo.DOM` to pyright, and the others
+`Any`.
+
+The credentials are resolved before the transaction starts, of `steps` of
+the provider, or of `credentials_p` in `call_p`, so that calls at once wait
+for the same promise, which `steps` alone does not share. The request is
+signed in the event `start` of the user agent of the client, as `Request`
+names it, and of that transaction only, which unsubscribes itself: the
+request is complete then, with its absolute URL, as a relative endpoint, of
+the server of a test, is resolved to the server of the blocking or the
+non-blocking requests only when it starts. `t/AWS_Client.py` uses a relative
+endpoint for that reason, as `ua.server.url()` is the server of the
+blocking requests, which the non-blocking ones never reach.
+
+The endpoint is `endpoint` of the client, the one that `Pyjo.AWS.Config`
+resolves of the ID of the service, or the regional one of its prefix,
+`amazonaws.com.cn` in the regions `cn-`, as the partitions `aws` and
+`aws-cn` have it; the others, as GovCloud, FIPS and dual-stack, take
+`endpoint`. The three names of a service are its name in the signature, the
+prefix of its endpoint and its ID, which are the same for most services,
+and differ for SSO, `awsssoportal`, `portal.sso` and `SSO`. The signer of S3
+signs the path as it is, with the hash of the body, as S3 wants.
 
 ## Imports of the Package
 
