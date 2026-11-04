@@ -19,7 +19,9 @@ Pyjo.AWS.Credentials.Profile - Credentials of a profile of the shared files
 profile of the shared files of :mod:`Pyjo.AWS.Config`, as the SDKs of AWS
 take them: the keys ``aws_access_key_id``, ``aws_secret_access_key`` and
 ``aws_session_token`` of the profile, or the program of its
-``credential_process``, of :mod:`Pyjo.AWS.Credentials.Process`.
+``credential_process``, of :mod:`Pyjo.AWS.Credentials.Process`, or the role
+of IAM Identity Center of its ``sso_session`` or ``sso_start_url``, of
+:mod:`Pyjo.AWS.Credentials.SSO`, which comes first.
 
 A profile that is not in the files is an error, but the profile ``default``,
 which a machine without the files has not either.
@@ -28,7 +30,7 @@ See also
 --------
 
 :mod:`Pyjo.AWS.Credentials.Provider`, :mod:`Pyjo.AWS.Config`,
-:mod:`Pyjo.AWS.Credentials.Process`.
+:mod:`Pyjo.AWS.Credentials.Process`, :mod:`Pyjo.AWS.Credentials.SSO`.
 
 Classes
 -------
@@ -37,7 +39,7 @@ Classes
 import Pyjo.Exception
 
 from .. import Config, Credentials
-from . import Process, Provider
+from . import SSO, Process, Provider
 
 from typing import Any
 
@@ -86,7 +88,10 @@ class Pyjo_AWS_Credentials_Profile(Provider.object):
             raise Pyjo.Exception.new(f'The profile {name} of AWS is not in {config.config_file}')
         settings = config.settings(name)
 
-        # TODO: role_arn, web_identity_token_file, sso_session and sso_start_url, which come before the keys
+        # TODO: role_arn and web_identity_token_file, which come before SSO
+
+        if settings.get('sso_session') or settings.get('sso_start_url'):
+            return await SSO.new(config=config, profile=name, ua=self.ua, refresh=self.refresh).fetch()
 
         access_key_id = settings.get('aws_access_key_id') or None
         secret_access_key = settings.get('aws_secret_access_key') or None

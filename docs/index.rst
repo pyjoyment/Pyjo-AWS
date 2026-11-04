@@ -18,6 +18,7 @@
     api/Pyjo_AWS_Credentials_Process
     api/Pyjo_AWS_Credentials_Profile
     api/Pyjo_AWS_Credentials_Provider
+    api/Pyjo_AWS_Credentials_SSO
     api/Pyjo_AWS_Error
     api/Pyjo_AWS_Protocol
     api/Pyjo_AWS_Protocol_JSON

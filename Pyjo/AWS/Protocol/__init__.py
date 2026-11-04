@@ -107,7 +107,8 @@ class Pyjo_AWS_Protocol[T](Pyjo.Base.object):
         The error of a response of JSON, of the protocols of JSON: the code of
         the header ``X-Amzn-ErrorType`` or of the field ``__type`` or
         ``code``, without the namespace before ``#``, and the message of the
-        field ``message``.
+        field ``message``, or ``error_description`` of OAuth, as SSO OIDC has
+        it.
         """
         res = tx.res
         try:
@@ -117,7 +118,12 @@ class Pyjo_AWS_Protocol[T](Pyjo.Base.object):
         fields = cast(dict[str, Any], data) if isinstance(data, dict) else {}
         code = (res.headers.header('X-Amzn-ErrorType') or '').split(':')[0]
         code = code or str(fields.get('__type') or fields.get('code') or fields.get('Code') or '')
-        message = fields.get('message') or fields.get('Message') or fields.get('errorMessage')
+        message = (
+            fields.get('message')
+            or fields.get('Message')
+            or fields.get('errorMessage')
+            or fields.get('error_description')
+        )
         return self.new_error(tx, code.rsplit('#', 1)[-1], str(message) if message else None)
 
     def parse(self, tx: Pyjo.Transaction.HTTP.object) -> T:
