@@ -35,6 +35,7 @@ Classes
 """
 
 import Pyjo.Base
+import Pyjo.Date
 import Pyjo.Exception
 
 import datetime
@@ -138,11 +139,10 @@ def parse_time(value: str) -> datetime.datetime:
     A time of RFC 3339, as the expiration of credentials, with its time zone,
     UTC when it has none.
     """
-    try:
-        time = datetime.datetime.fromisoformat(value.strip())
-    except ValueError as e:
-        raise Pyjo.Exception.new(f'Invalid time of the expiration of credentials of AWS: {value!r}') from e
-    return time if time.tzinfo is not None else time.replace(tzinfo=datetime.UTC)
+    date = Pyjo.Date.new(value.strip())
+    if date.epoch is None:
+        raise Pyjo.Exception.new(f'Invalid time of the expiration of credentials of AWS: {value!r}')
+    return date.to_datetime()
 
 
 new = Pyjo_AWS_Credentials.new

@@ -2,8 +2,8 @@ import Pyjo.AWS.ECDSA
 import Pyjo.File
 
 from Pyjo.Test import *
+from Pyjo.Util import b64_encode
 
-import base64
 import importlib.util
 import re
 import shutil
@@ -39,7 +39,7 @@ P384 = '06052b81040022'
 
 
 def pem(label, der):
-    lines = re.findall('.{1,64}', base64.b64encode(der).decode())
+    lines = re.findall('.{1,64}', b64_encode(der, ''))
     return '\n'.join([f'-----BEGIN {label}-----', *lines, f'-----END {label}-----']) + '\n'
 
 

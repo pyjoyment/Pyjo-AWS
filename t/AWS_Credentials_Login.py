@@ -9,12 +9,11 @@ import Pyjo.JSON
 import Pyjo.UserAgent
 
 from Pyjo.Test import *
+from Pyjo.Util import b64url_decode, sha256_sum
 from Pyjoyment.Lite import *
 
-import base64
 import contextlib
 import datetime
-import hashlib
 import os
 import re
 import stat
@@ -80,7 +79,7 @@ def setup(config, files):
 
 
 def session_file(session=SESSION):
-    return cache.child(hashlib.sha256(session.encode()).hexdigest() + '.json')
+    return cache.child(sha256_sum(session.encode()) + '.json')
 
 
 def token(access_key_id='AKIDLOGIN', expires=datetime.timedelta(minutes=15), refresh='refresh', key=KEY):
@@ -111,21 +110,17 @@ mocks = {}
 calls = []
 
 
-def b64decode(segment):
-    return base64.urlsafe_b64decode(segment + '=' * (-len(segment) % 4))
-
-
 def proof(c):
     jwt = c.req.headers.header('DPoP') or ''
     parts = jwt.split('.')
     if len(parts) != 3:
         return 'no JWT'
-    header, payload = Pyjo.JSON.decode_json(b64decode(parts[0])), Pyjo.JSON.decode_json(b64decode(parts[1]))
+    header, payload = Pyjo.JSON.decode_json(b64url_decode(parts[0])), Pyjo.JSON.decode_json(b64url_decode(parts[1]))
     jwk = header.get('jwk') or {}
     if header.get('typ') != 'dpop+jwt' or header.get('alg') != 'ES256' or jwk.get('crv') != 'P-256':
         return f'header {header}'
-    point = (int.from_bytes(b64decode(jwk['x'])), int.from_bytes(b64decode(jwk['y'])))
-    if not Pyjo.AWS.ECDSA.verify(point, f'{parts[0]}.{parts[1]}'.encode(), b64decode(parts[2])):
+    point = (int.from_bytes(b64url_decode(jwk['x'])), int.from_bytes(b64url_decode(jwk['y'])))
+    if not Pyjo.AWS.ECDSA.verify(point, f'{parts[0]}.{parts[1]}'.encode(), b64url_decode(parts[2])):
         return 'signature'
     if payload.get('htm') != 'POST' or payload.get('htu') != c.req.url.path.to_str():
         return f'payload {payload}'

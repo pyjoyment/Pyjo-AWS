@@ -46,17 +46,16 @@ Classes
 -------
 """
 
+import Pyjo.Date
 import Pyjo.Exception
 import Pyjo.JSON
 
-from Pyjo.Util import getenv
+from Pyjo.Util import getenv, sha256_sum
 
 from .. import ECDSA, Client, Config, Credentials, Error
 from ..Protocol import RestJSON
 from . import Provider
 
-import datetime
-import hashlib
 import os
 import time
 import uuid
@@ -131,7 +130,7 @@ class Pyjo_AWS_Credentials_Login(Provider.object):
         The file of a session in :attr:`cache_dir`, of the SHA-256 of its
         name, as the AWS CLI names it.
         """
-        return os.path.join(self.cache_dir, hashlib.sha256(session.encode()).hexdigest() + '.json')
+        return os.path.join(self.cache_dir, sha256_sum(session.encode()) + '.json')
 
     async def fetch(self) -> Credentials.object | None:
         """::
@@ -169,14 +168,14 @@ class Pyjo_AWS_Credentials_Login(Provider.object):
         if not isinstance(token, dict) or not fields.get('expiresIn') or not fields.get('refreshToken'):
             raise Pyjo.Exception.new(f'Invalid response of the sign-in service of AWS for the login session {session}')
         access = cast(dict[str, Any], token)
-        expiration = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=int(fields['expiresIn']))
+        expiration = Pyjo.Date.new(int(time.time()) + int(fields['expiresIn']))
         cached.update(
             accessToken={
                 'accessKeyId': access['accessKeyId'],
                 'secretAccessKey': access['secretAccessKey'],
                 'sessionToken': access['sessionToken'],
                 'accountId': cached['accessToken'].get('accountId'),
-                'expiresAt': expiration.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'expiresAt': expiration.to_rfc3339(),
             },
             refreshToken=fields['refreshToken'],
         )

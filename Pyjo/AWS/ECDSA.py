@@ -44,9 +44,9 @@ Classes
 import Pyjo.Base
 import Pyjo.Exception
 
-import base64
+from Pyjo.Util import b64_decode, b64url_encode, sha256_bytes
+
 import functools
-import hashlib
 import hmac
 import importlib
 
@@ -152,7 +152,7 @@ class Pyjo_AWS_ECDSA(Pyjo.Base.object):
             raise Pyjo.Exception.new('Invalid private key of P-256: not PEM')
         label = lines[0].removeprefix('-----BEGIN ').removesuffix('-----')
         try:
-            der = base64.b64decode(''.join(lines[1:-1]), validate=True)
+            der = b64_decode(''.join(lines[1:-1]))
             if label == 'PRIVATE KEY':
                 private_value = _pkcs8(der)
             elif label == 'EC PRIVATE KEY':
@@ -186,7 +186,7 @@ class Pyjo_AWS_ECDSA(Pyjo.Base.object):
             der = self._key.sign(data, crypto.ec.ECDSA(crypto.hashes.SHA256()))
             r, s = crypto.utils.decode_dss_signature(der)
             return _bytes(r) + _bytes(s)
-        return _sign(self.private_value, hashlib.sha256(data).digest())
+        return _sign(self.private_value, sha256_bytes(data))
 
     def verify(self, data: bytes, signature: bytes) -> bool:
         """::
@@ -205,7 +205,7 @@ def base64url(data: bytes) -> str:
 
     The base64url of data without its padding, as JSON Web Signature has it.
     """
-    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('ascii')
+    return b64url_encode(data)
 
 
 def verify(public_point: tuple[int, int], data: bytes, signature: bytes) -> bool:
@@ -221,7 +221,7 @@ def verify(public_point: tuple[int, int], data: bytes, signature: bytes) -> bool
     r, s = int.from_bytes(signature[:32]), int.from_bytes(signature[32:])
     if not (0 < r < N and 0 < s < N):
         return False
-    e = int.from_bytes(hashlib.sha256(data).digest())
+    e = int.from_bytes(sha256_bytes(data))
     w = pow(s, -1, N)
     point = _add(_multiply(e * w % N, G), _multiply(r * w % N, public_point))
     return point is not None and point[0] % N == r
@@ -248,7 +248,8 @@ def _bytes(value: int) -> bytes:
 
 
 # The signature of a digest of SHA-256, of the nonce of RFC 6979, section 3.2, as the order of P-256 and the digest have
-# 256 bits each, so that a value of HMAC is a candidate of the nonce as it is
+# 256 bits each, so that a value of HMAC is a candidate of the nonce as it is, of the bytes of HMAC, which Pyjo.Util
+# gives only in hexadecimal
 def _sign(d: int, digest: bytes) -> bytes:
     e = int.from_bytes(digest)
     x, h = _bytes(d), _bytes(e % N)
