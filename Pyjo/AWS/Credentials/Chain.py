@@ -29,7 +29,8 @@ default:
 #. the role of a web identity of the environment, of
    :mod:`Pyjo.AWS.Credentials.WebIdentity`,
 #. the profile of the shared files, of :mod:`Pyjo.AWS.Credentials.Profile`,
-   with its role, its SSO, its ``credential_process`` or its keys,
+   with its role, its SSO, its keys, its session of ``aws login`` or its
+   ``credential_process``,
 #. the container of ECS or EKS Pod Identity, of
    :mod:`Pyjo.AWS.Credentials.Container`,
 #. the instance metadata of EC2, of

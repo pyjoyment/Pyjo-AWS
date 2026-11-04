@@ -197,6 +197,61 @@ imports SSO, which imports the client.
 `str` of a `Pyjo.Exception` ends with a new line, as `Mojo::Exception` does,
 so a message that includes another exception takes its `message`.
 
+## aws login
+
+`Pyjo.AWS.Credentials.Login` takes the credentials of a session of the
+console of `aws login`, of the cache of the AWS CLI,
+`~/.aws/login/cache/<SHA-256>.json` of the `login_session` of the profile, or
+of `AWS_LOGIN_CACHE_DIRECTORY`, as botocore names it, of `LoginProvider` of
+`botocore/credentials.py`, which is the reference, as the API of the sign-in
+service has no documentation of its own. The cache has the credentials, of 15
+minutes, and the refresh token and the key of DPoP of the session, which the
+fields of botocore require, all of them, even while the credentials are
+valid.
+
+The credentials are refreshed `refresh` seconds before they expire with
+`CreateOAuth2Token` of the sign-in service, of the model `signin/2023-01-01`
+of botocore: `POST /v1/token` of REST-JSON, unsigned, whose body is the
+`tokenInput` and whose response is the `tokenOutput`, as their `payload`, on
+`https://<region>.signin.aws.amazon.com`, of the region of the profile, as the
+rules of the endpoints of the model have it for the operations that are not
+of the control plane, or the one of the ID `Signin` that `Pyjo.AWS.Config`
+resolves. The request has the header `DPoP`, of RFC 9449, a JWT of ES256 of
+the key of the cache, with its public key, the method and the URL of the
+request, the time and a UUID, as botocore makes it. The refreshed token is
+written back to the same file, with the account and the other fields of the
+cache, as SSO writes its token, of `write_cache` of
+`Pyjo.AWS.Credentials.Provider`; a failed refresh keeps the old credentials
+while they are valid. `TOKEN_EXPIRED` and `USER_CREDENTIALS_CHANGED` of the
+field `error` of `AccessDeniedException` end the session, which tells to run
+`aws login`.
+
+`Pyjo.AWS.Credentials.Profile` takes `login_session` after the keys of the
+profile and before `credential_process`, as botocore orders them, after SSO.
+
+`Pyjo.AWS.ECDSA` signs ES256 with the package `cryptography` when it is
+installed, of the extra `cryptography` of `pyproject.toml`, as botocore needs
+`botocore[crt]`, and in Python otherwise, so that the distribution depends on
+nothing but Pyjoyment. The package is imported with `importlib`, so that
+pyright, without it in `.venv`, takes its modules as `Any`. The signature of
+Python is of the affine coordinates of P-256 and of the nonce of RFC 6979,
+deterministic, so that no random number of the machine makes it, and is not
+constant-time: the key and the proof are made on the machine of the key, once
+a refresh, which is not an oracle of a remote timing. It may move to a
+distribution of its own, as Pyjo.Crypto, once something else needs it.
+
+`t/AWS_ECDSA.py` checks the signature of Python with the vectors of RFC 6979,
+A.2.5, both backends against each other, and the signatures with
+`openssl dgst -verify`. `t/login-provider-test-cases` has the cases of
+`tests/unit/login/login-provider-test-cases.json` of botocore, kept as they
+are, under the Apache License 2.0 of their own, which `biome.jsonc` leaves out:
+their key of DPoP is a key of the test, and their time of a refresh is the one
+of the mock of botocore, so `t/AWS_Credentials_Login.py` checks the expiration
+of `expiresIn` against the time of the test. Its sign-in service checks the
+proof of each request as the service does, with the public key of its header.
+The workflow Tests runs without `cryptography`, so its backend is checked with
+`uv run --with cryptography` in development.
+
 ## Roles
 
 A profile of `role_arn` is resolved as botocore resolves it, which comes
@@ -328,12 +383,13 @@ hides the namespace that `extend_path` keeps open, so it does not find
 
 The files of secrets of Pyjoyment are git-ignored in `.gitignore` and denied
 to Claude Code in `.claude/settings.json`, and so are the credentials of the
-machine, `~/.aws/credentials` and the caches of the tokens of SSO and of the
-roles of the AWS CLI, `~/.aws/sso/cache` and `~/.aws/cli/cache`. A test never
-reads the files of the machine: it sets `AWS_CONFIG_FILE`,
-`AWS_SHARED_CREDENTIALS_FILE` and `HOME` to files of its own, with keys of
-the examples of AWS, as `AKIDEXAMPLE`, and serves the endpoints of AWS that it
-needs with an application of Pyjoyment.
+machine, `~/.aws/credentials` and the caches of the tokens of SSO, of the
+sessions of `aws login`, with their keys of DPoP, and of the roles of the AWS
+CLI, `~/.aws/sso/cache`, `~/.aws/login/cache` and `~/.aws/cli/cache`. A test
+never reads the files of the machine: it sets `AWS_CONFIG_FILE`,
+`AWS_SHARED_CREDENTIALS_FILE`, `AWS_LOGIN_CACHE_DIRECTORY` and `HOME` to files
+of its own, with keys of the examples of AWS, as `AKIDEXAMPLE`, and serves the
+endpoints of AWS that it needs with an application of Pyjoyment.
 
 ## Development
 

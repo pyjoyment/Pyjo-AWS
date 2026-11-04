@@ -54,8 +54,8 @@ bucket = os.environ.get('S3_BUCKET') or die(
 root = '/' + url_escape(bucket)
 
 # A client of S3 for each event loop, as the connections of its user agent belong to one, with the region, the endpoint
-# and the credentials that the AWS CLI finds: of the environment, of a profile with its keys, SSO, a role or
-# credential_process, of a web identity, of the container of ECS or EKS Pod Identity, or of the instance of EC2
+# and the credentials that the AWS CLI finds: of the environment, of a profile with its keys, SSO, aws login, a role
+# or credential_process, of a web identity, of the container of ECS or EKS Pod Identity, or of the instance of EC2
 local = threading.local()
 
 

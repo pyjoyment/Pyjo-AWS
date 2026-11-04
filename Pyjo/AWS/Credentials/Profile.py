@@ -18,7 +18,8 @@ Pyjo.AWS.Credentials.Profile - Credentials of a profile of the shared files
 :mod:`Pyjo.AWS.Credentials.Profile` is the provider of the credentials of a
 profile of the shared files of :mod:`Pyjo.AWS.Config`, as the SDKs of AWS
 take them: the keys ``aws_access_key_id``, ``aws_secret_access_key`` and
-``aws_session_token`` of the profile, or the program of its
+``aws_session_token`` of the profile, or the session of ``aws login`` of its
+``login_session``, of :mod:`Pyjo.AWS.Credentials.Login`, or the program of its
 ``credential_process``, of :mod:`Pyjo.AWS.Credentials.Process`, or the role
 of IAM Identity Center of its ``sso_session`` or ``sso_start_url``, of
 :mod:`Pyjo.AWS.Credentials.SSO`, which comes before them, or its
@@ -50,7 +51,7 @@ See also
 --------
 
 :mod:`Pyjo.AWS.Credentials.Provider`, :mod:`Pyjo.AWS.Config`,
-:mod:`Pyjo.AWS.Credentials.Process`, :mod:`Pyjo.AWS.Credentials.SSO`,
+:mod:`Pyjo.AWS.Credentials.Process`, :mod:`Pyjo.AWS.Credentials.Login`, :mod:`Pyjo.AWS.Credentials.SSO`,
 :mod:`Pyjo.AWS.Credentials.AssumeRole`, :mod:`Pyjo.AWS.Credentials.WebIdentity`.
 
 Classes
@@ -60,7 +61,7 @@ Classes
 import Pyjo.Exception
 
 from .. import Config, Credentials
-from . import SSO, AssumeRole, Container, Environment, InstanceMetadata, Process, Provider, WebIdentity
+from . import SSO, AssumeRole, Container, Environment, InstanceMetadata, Login, Process, Provider, WebIdentity
 
 from collections.abc import Collection
 from typing import Any
@@ -163,6 +164,9 @@ class Pyjo_AWS_Credentials_Profile(Provider.object):
                 account_id=settings.get('aws_account_id') or None,
                 provider='profile',
             )
+
+        if settings.get('login_session'):
+            return await Login.new(config=config, profile=name, ua=self.ua, refresh=self.refresh).fetch()
 
         if command := settings.get('credential_process'):
             return await Process.new(command=command, ua=self.ua).fetch()

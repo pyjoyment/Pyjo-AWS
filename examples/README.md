@@ -1,9 +1,9 @@
 # Examples
 
 Short scripts that show what Pyjo-AWS does, with the credentials that the AWS
-CLI finds, of any kind: the environment, a profile with its keys, SSO, a role
-or `credential_process`, a web identity, the container of ECS or EKS Pod
-Identity, or the instance of EC2.
+CLI finds, of any kind: the environment, a profile with its keys, SSO, a
+session of `aws login`, a role or `credential_process`, a web identity, the
+container of ECS or EKS Pod Identity, or the instance of EC2.
 
 ## Layout
 
@@ -27,7 +27,8 @@ environment variables `S3_BUCKET`, `AWS_PROFILE`, `AWS_REGION` and
 uv run python examples/s3.py --profile myprofile --bucket mybucket daemon
 ```
 
-A profile of SSO needs a token of `aws sso login --profile myprofile` first.
+A profile of SSO needs a token of `aws sso login --profile myprofile` first,
+and a profile of a session of the console `aws login --profile myprofile`.
 
 The tests in [`t/examples/`](../t/examples) check the scripts, and the
 documentation shows them on its page of examples.

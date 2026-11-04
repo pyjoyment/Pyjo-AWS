@@ -36,6 +36,14 @@ or, in a project managed with [uv](https://docs.astral.sh/uv/):
 uv add Pyjo-AWS
 ```
 
+The credentials of `aws login` are refreshed with a signature of ECDSA,
+which the package `cryptography` makes, of the extra `cryptography`, or
+Python itself without it:
+
+```sh
+pip install 'Pyjo-AWS[cryptography]'
+```
+
 The development version is installed from the Git repository:
 
 ```sh
@@ -46,11 +54,11 @@ pip install git+https://github.com/pyjoyment/Pyjo-AWS
 
 `Pyjo.AWS.Client` calls an operation of an API of AWS, with the credentials,
 the region and the endpoint that the AWS CLI finds: of the environment, of a
-profile with its keys, SSO of `aws sso login`, a role or
-`credential_process`, of a web identity, of the container of ECS or EKS Pod
-Identity, or of the instance of EC2. The call is the operation in the
-protocol of its API, with the names that its documentation has, and its
-result is the XML of the response, as a `Pyjo.DOM` object, or its JSON:
+profile with its keys, SSO of `aws sso login`, a session of `aws login`, a
+role or `credential_process`, of a web identity, of the container of ECS or
+EKS Pod Identity, or of the instance of EC2. The call is the operation in the
+protocol of its API, with the names that its documentation has, and its result
+is the XML of the response, as a `Pyjo.DOM` object, or its JSON:
 
 ```python
 import Pyjo.AWS.Client
