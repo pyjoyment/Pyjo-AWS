@@ -120,7 +120,11 @@ class GetObject(Pyjo.AWS.Protocol.RestXML.object):
 
         source = Pyjo.IOLoop.stream(tx.connection)
 
+        # The content emits an empty chunk too, of the end of the headers that come before it, as S3 sends them in
+        # records of TLS of their own, which would end the response
         def read(content, chunk):
+            if not chunk:
+                return
             source.stop()
             c.write(chunk, lambda c: source.start())
 

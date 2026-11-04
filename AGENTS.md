@@ -294,6 +294,12 @@ user agent of the application, and the request of a client is signed and
 started by the client. A client that goes away before the end of the object
 closes the connection to S3, whose error the action ignores.
 
+The event `read` comes with an empty chunk too, when the headers come in a
+read of their own, as S3 sends them in a record of TLS of their own, which
+the example skips, as `proxy.start_p` does: `write` of an empty chunk ends
+the response, with the headers only, and the client waits for the rest of
+the object until the server closes the connection.
+
 The example has a client of S3 for each thread, as each thread has an event
 loop of its own, whose connections the user agent of the client keeps, and
 the bucket in the path of the endpoint, as S3 and the servers of its API, as
@@ -305,7 +311,9 @@ a profile of the files of the test, whose signature S3 checks with
 `Pyjo.AWS.SigV4` of the request as it comes, before the router reads its
 path. S3 does not compress its responses, as Pyjoyment does for a user agent
 that accepts gzip, so that the large object comes in chunks, and a client
-that goes away before its end is the case of the closed connection.
+that goes away before its end is the case of the closed connection. The
+content of `slow.txt` comes after its headers, as of S3 over TLS, whose empty
+chunk a server on the loopback without TLS does not send otherwise.
 
 ## Imports of the Package
 

@@ -21,6 +21,7 @@ EXAMPLE = ROOT.child('examples', 's3.py').to_str()
 
 S3 = tmp.child('s3.py').spew(r"""
 import Pyjo.AWS.SigV4
+import Pyjo.IOLoop
 
 from Pyjo.Util import md5_sum, xml_escape
 from Pyjoyment.Lite import *
@@ -46,6 +47,7 @@ OBJECTS = {
     'files/3.txt': ('text/plain', b'3'),
     'files/sub/x.txt': ('text/plain', b'x'),
     'secret.txt': ('text/plain', b'denied'),
+    'slow.txt': ('text/plain', b'Slow'),
 }
 AUTHORIZATION = re.compile(
     r'AWS4-HMAC-SHA256 Credential=(\w+)/\d{8}/([\w-]+)/s3/aws4_request, SignedHeaders=([\w;-]+), Signature=(\w+)$'
@@ -130,6 +132,13 @@ def get_object(c):
     headers.etag = f'"{md5_sum(body)}"'
     headers.last_modified = 'Wed, 04 Nov 2026 12:00:00 GMT'
     headers.header('X-Amz-Request-Id', 's3-1')
+
+    # The headers before the content, as S3 sends them in records of TLS of their own
+    if key == 'slow.txt':
+        headers.content_length = len(body)
+        c.write()
+        Pyjo.IOLoop.timer(0.1, lambda loop: c.write(body))
+        return
     c.render(data=body)
 
 
@@ -207,6 +216,10 @@ try:
         is_ok(tx.res.code, 200, 'key with a space, a comma and UTF-8, signed as it is sent')
         is_ok(tx.res.text, 'Special', 'content of the key')
 
+        tx = ua.get(f'{app_url}/slow.txt')
+        is_ok(tx.res.code, 200, 'object whose content comes after its headers')
+        is_ok(tx.res.text, 'Slow', 'content after the headers')
+
         tx = ua.get(f'{app_url}/empty.txt')
         is_ok(tx.res.code, 200, 'empty object')
         is_ok(tx.res.body, b'', 'no content')
@@ -227,7 +240,7 @@ try:
         is_ok(tx.res.code, 200, 'root without index.html')
         is_ok(
             [a.text for a in tx.res.dom().find('li a')],
-            ['big.bin', 'docs/', 'empty.txt', 'files/', 'secret.txt'],
+            ['big.bin', 'docs/', 'empty.txt', 'files/', 'secret.txt', 'slow.txt'],
             'folders and objects of the pages of the list',
         )
 
