@@ -14,6 +14,7 @@
       "Read(~/.aws/credentials)",
       "Read(~/.aws/sso/cache/**)",
       "Read(~/.aws/cli/cache/**)",
+      "Read(~/.aws/login/cache/**)",
       "Edit(**/.env)",
       "Edit(**/.env.*)",
       "Edit(**/.envrc)",
@@ -26,7 +27,8 @@
       "Edit(**/*.key)",
       "Edit(~/.aws/credentials)",
       "Edit(~/.aws/sso/cache/**)",
-      "Edit(~/.aws/cli/cache/**)"
+      "Edit(~/.aws/cli/cache/**)",
+      "Edit(~/.aws/login/cache/**)"
     ]
   }
 }

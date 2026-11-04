@@ -54,16 +54,19 @@ Classes
 -------
 """
 
+import Pyjo.Date
 import Pyjo.Exception
 import Pyjo.JSON
+
+from Pyjo.Util import sha1_sum
 
 from .. import Client, Config, Credentials
 from ..Protocol import RestJSON
 from . import Provider
 
 import datetime
-import hashlib
 import os
+import time
 
 from typing import Any, cast
 
@@ -131,7 +134,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         the start URL of a legacy profile, in :attr:`cache_dir`, of the SHA-1
         of the key, as the AWS CLI names it.
         """
-        return os.path.join(self.cache_dir, hashlib.sha1(key.encode()).hexdigest() + '.json')
+        return os.path.join(self.cache_dir, sha1_sum(key.encode()) + '.json')
 
     async def fetch(self) -> Credentials.object | None:
         """::
@@ -193,9 +196,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
             secret_access_key=fields['secretAccessKey'],
             session_token=fields.get('sessionToken') or None,
             expiration=(
-                datetime.datetime.fromtimestamp(expiration / 1000, datetime.UTC)
-                if isinstance(expiration, (int, float))
-                else None
+                Pyjo.Date.new(expiration / 1000).to_datetime() if isinstance(expiration, (int, float)) else None
             ),
             account_id=cast(str, account_id),
             provider='sso',
@@ -262,13 +263,13 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
                     f'Cannot refresh the token of the SSO of {key} of AWS: {_message(e)}: {login}'
                 ) from e
             fields = cast(dict[str, Any], created)
-            expiration = now + datetime.timedelta(seconds=int(fields['expiresIn']))
+            expiration = Pyjo.Date.new(int(time.time()) + int(fields['expiresIn']))
             cached.update(
                 accessToken=fields['accessToken'],
-                expiresAt=expiration.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                expiresAt=expiration.to_rfc3339(),
                 refreshToken=fields.get('refreshToken') or cached['refreshToken'],
             )
-            _write(path, cached)
+            Provider.write_cache(path, cached)
             return cached['accessToken']
 
         if expires_in > 0:
@@ -279,15 +280,6 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
 # The message of an exception in another, without the new line that str of a Pyjo.Exception ends with
 def _message(e: Exception) -> str:
     return e.message if isinstance(e, Pyjo.Exception.object) else str(e)
-
-
-# The file of the cache replaced at once, readable by its owner only, as the AWS CLI writes it
-def _write(path: str, data: dict[str, Any]) -> None:
-    tmp = f'{path}.{os.getpid()}.tmp'
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, 'wb') as f:
-        f.write(Pyjo.JSON.encode_json(data))
-    os.replace(tmp, path)
 
 
 new = Pyjo_AWS_Credentials_SSO.new

@@ -5,6 +5,8 @@
       "**",
       // The cases of the AWS Signing Test Suite, which the tests read as they are
       "!**/t/aws-signing-test-suite/v4",
+      // The cases of the provider of aws login of botocore, which the tests read as they are
+      "!**/t/login-provider-test-cases/login-provider-test-cases.json",
       // Rewritten by trunk upgrade
       "!**/.trunk"
     ]

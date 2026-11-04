@@ -9,11 +9,11 @@ import Pyjo.JSON
 import Pyjo.UserAgent
 
 from Pyjo.Test import *
+from Pyjo.Util import sha1_sum
 from Pyjoyment.Lite import *
 
 import contextlib
 import datetime
-import hashlib
 import os
 import re
 import stat
@@ -106,7 +106,7 @@ def wait(promise):
 
 
 def token_file(key):
-    return cache.child(hashlib.sha1(key.encode()).hexdigest() + '.json')
+    return cache.child(sha1_sum(key.encode()) + '.json')
 
 
 def write_token(key, token, expires, refresh=None, registered=datetime.timedelta(days=30)):

@@ -74,11 +74,14 @@ Classes
 """
 
 import Pyjo.Base
+import Pyjo.JSON
 import Pyjo.Promise
 import Pyjo.Transaction.HTTP
 import Pyjo.UserAgent
 
 from .. import Credentials, Steps
+
+import os
 
 from collections.abc import Sequence
 from typing import Any
@@ -224,6 +227,22 @@ class Pyjo_AWS_Credentials_Provider(Pyjo.Base.object):
         credentials = await Steps.Steps(self.fetch())
         self.cached = credentials
         return credentials
+
+
+def write_cache(path: str, data: dict[str, Any]) -> None:
+    """::
+
+        Pyjo.AWS.Credentials.Provider.write_cache(path, token)
+
+    Write the JSON of a token to a file of a cache of the AWS CLI, replaced
+    at once and readable by its owner only, as the AWS CLI writes it, so that
+    the AWS CLI and the other programs share the token.
+    """
+    tmp = f'{path}.{os.getpid()}.tmp'
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'wb') as f:
+        f.write(Pyjo.JSON.encode_json(data))
+    os.replace(tmp, path)
 
 
 new = Pyjo_AWS_Credentials_Provider.new
