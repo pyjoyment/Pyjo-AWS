@@ -46,6 +46,8 @@ import Pyjo.Message.Request
 
 from Pyjo.Util import getenv, hmac_sha256_sum, sha256_sum, url_escape
 
+from . import Credentials
+
 import datetime
 import hmac
 
@@ -70,6 +72,7 @@ class Pyjo_AWS_SigV4(Pyjo.Base.object):
         access_key_id: str | None = None,
         secret_access_key: str | None = None,
         session_token: str | None = None,
+        credentials: Credentials.object | None = None,
         normalize_path: bool = True,
         double_encode: bool = True,
         content_sha256: bool = False,
@@ -77,11 +80,19 @@ class Pyjo_AWS_SigV4(Pyjo.Base.object):
         """::
 
             signer = Pyjo.AWS.SigV4.new(service='lambda')
+            signer = Pyjo.AWS.SigV4.new(service='sts', credentials=Pyjo.AWS.Credentials.Chain.new().credentials())
             signer = Pyjo.AWS.SigV4.new(service='s3', region='us-east-1', normalize_path=False, double_encode=False,
                                         content_sha256=True)
 
-        Construct a new :mod:`Pyjo.AWS.SigV4` object.
+        Construct a new :mod:`Pyjo.AWS.SigV4` object. The keys of
+        :mod:`Pyjo.AWS.Credentials` of ``credentials`` come in the place of
+        those of the environment, and of its session token too.
         """
+        if credentials is not None:
+            access_key_id = credentials.access_key_id if access_key_id is None else access_key_id
+            secret_access_key = credentials.secret_access_key if secret_access_key is None else secret_access_key
+            session_token = (credentials.session_token or '') if session_token is None else session_token
+
         self.service = service
         """::
 
@@ -125,7 +136,7 @@ class Pyjo_AWS_SigV4(Pyjo.Base.object):
         ``AWS_SECRET_ACCESS_KEY`` environment variable, unless it is empty.
         """
 
-        self.session_token = session_token if session_token is not None else _environ('AWS_SESSION_TOKEN')
+        self.session_token = (session_token or None) if session_token is not None else _environ('AWS_SESSION_TOKEN')
         """::
 
             session_token = signer.session_token
