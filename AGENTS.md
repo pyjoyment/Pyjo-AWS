@@ -393,8 +393,11 @@ The package and the tests take what Pyjoyment has, as the distribution
 depends on it already: the hashes, HMAC and Base64 of `Pyjo.Util`, as
 `sha256_sum`, `hmac_sha256_bytes` of the keys of SigV4 and of the nonce of
 RFC 6979, and `b64url_encode`, and the times of `Pyjo.Date`, of RFC 3339 and
-of the format of `X-Amz-Date`, `f'{date:%Y%m%dT%H%M%SZ}'`, not `hashlib`,
-`hmac`, `base64` and the formats of `datetime`.
+of the format of `X-Amz-Date`, `f'{date:%Y%m%dT%H%M%SZ}'`, and the paths of
+`Pyjo.File`, of the shared files and the caches, with `expanduser` and
+`child`, not `hashlib`, `hmac`, `base64`, the formats of `datetime` and
+`os.path`, but `os.path.expandvars` of `AWS_LOGIN_CACHE_DIRECTORY`, which
+`Pyjo.File` does not have.
 
 ## Security
 

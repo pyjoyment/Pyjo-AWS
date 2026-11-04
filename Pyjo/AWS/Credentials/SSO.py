@@ -56,6 +56,7 @@ Classes
 
 import Pyjo.Date
 import Pyjo.Exception
+import Pyjo.File
 import Pyjo.JSON
 
 from Pyjo.Util import sha1_sum
@@ -65,7 +66,6 @@ from ..Protocol import RestJSON
 from . import Provider
 
 import datetime
-import os
 import time
 
 from typing import Any, cast
@@ -115,16 +115,17 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         by default.
         """
 
-        self.cache_dir = os.path.expanduser(cache_dir or '~/.aws/sso/cache')
+        self.cache_dir = Pyjo.File.new(cache_dir or '~/.aws/sso/cache').expanduser()
         """::
 
             path = provider.cache_dir
 
-        The directory of the cache of the tokens, ``~/.aws/sso/cache`` of the
+        The :mod:`Pyjo.File` object of the directory of the cache of the
+        tokens, ``~/.aws/sso/cache`` of the
         AWS CLI by default.
         """
 
-    def cache_file(self, key: str) -> str:
+    def cache_file(self, key: str) -> Pyjo.File.object:
         """::
 
             path = provider.cache_file('company')
@@ -134,7 +135,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         the start URL of a legacy profile, in :attr:`cache_dir`, of the SHA-1
         of the key, as the AWS CLI names it.
         """
-        return os.path.join(self.cache_dir, sha1_sum(key.encode()) + '.json')
+        return self.cache_dir.child(sha1_sum(key.encode()) + '.json')
 
     async def fetch(self) -> Credentials.object | None:
         """::
@@ -220,8 +221,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         path = self.cache_file(key)
         login = f'aws sso login --profile {self.profile}'
         try:
-            with open(path, 'rb') as f:
-                data: Any = Pyjo.JSON.decode_json(f.read())
+            data: Any = Pyjo.JSON.decode_json(path.slurp())
         except FileNotFoundError:
             raise Pyjo.Exception.new(f'No token of the SSO of {key} of AWS in {path}: {login}') from None
         except Exception as e:

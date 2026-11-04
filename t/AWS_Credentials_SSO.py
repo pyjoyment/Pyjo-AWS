@@ -176,7 +176,7 @@ def provider(profile, **kwargs):
 
 with subtest('Token of a session'):
     with environ():
-        ok(provider('sso').cache_dir.endswith('/.aws/sso/cache'), 'cache of the AWS CLI')
+        is_ok(provider('sso').cache_dir, str(cache), 'cache of the AWS CLI')
         is_ok(provider('sso').cache_file('company'), str(token_file('company')), 'file of the SHA-1 of the session')
 
         write_token('company', 'valid', datetime.timedelta(hours=8))
@@ -222,7 +222,7 @@ with subtest('Refresh'):
         if sys.platform == 'win32':
             skip('no modes of files on Windows')
         else:
-            is_ok(stat.S_IMODE(os.stat(token_file('company')).st_mode), 0o600, 'cache readable by its owner only')
+            is_ok(stat.S_IMODE(token_file('company').stat().st_mode), 0o600, 'cache readable by its owner only')
         provider('sso').credentials()
         is_ok(calls['oidc'], oidc + 1, 'new token not refreshed again')
 

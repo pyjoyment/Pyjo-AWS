@@ -50,11 +50,11 @@ Classes
 
 import Pyjo.Base
 import Pyjo.Exception
+import Pyjo.File
 
 from Pyjo.Util import getenv
 
 import configparser
-import os
 import re
 
 from typing import Any, cast
@@ -98,25 +98,25 @@ class Pyjo_AWS_Config(Pyjo.Base.object):
         profile, and not the ones of the environment, as botocore does.
         """
 
-        self.config_file = os.path.expanduser(config_file or getenv('AWS_CONFIG_FILE') or '~/.aws/config')
+        self.config_file = Pyjo.File.new(config_file or getenv('AWS_CONFIG_FILE') or '~/.aws/config').expanduser()
         """::
 
             path = config.config_file
             config.config_file = '/etc/aws/config'
 
-        The path of the configuration file, defaults to the value of the
+        The :mod:`Pyjo.File` object of the configuration file, defaults to the value of the
         ``AWS_CONFIG_FILE`` environment variable or ``~/.aws/config``.
         """
 
-        self.credentials_file = os.path.expanduser(
+        self.credentials_file = Pyjo.File.new(
             credentials_file or getenv('AWS_SHARED_CREDENTIALS_FILE') or '~/.aws/credentials'
-        )
+        ).expanduser()
         """::
 
             path = config.credentials_file
             config.credentials_file = '/etc/aws/credentials'
 
-        The path of the file of the credentials, defaults to the value of the
+        The :mod:`Pyjo.File` object of the file of the credentials, defaults to the value of the
         ``AWS_SHARED_CREDENTIALS_FILE`` environment variable or
         ``~/.aws/credentials``.
         """
@@ -249,7 +249,7 @@ def _is_true(value: Any) -> bool:
 
 # The sections of a file of INI, with the settings of the indented lines below a setting without a value as a dict, as
 # botocore parses them, or none of a file that does not exist
-def _parse(path: str) -> dict[str, dict[str, Any]]:
+def _parse(path: Pyjo.File.object) -> dict[str, dict[str, Any]]:
     # A section that is not unique is merged, and a section named DEFAULT is a profile as any other
     parser = configparser.RawConfigParser(strict=False, default_section='\0')
     try:
@@ -266,7 +266,7 @@ def _parse(path: str) -> dict[str, dict[str, Any]]:
     return result
 
 
-def _subsection(path: str, value: str) -> dict[str, str]:
+def _subsection(path: Pyjo.File.object, value: str) -> dict[str, str]:
     settings: dict[str, str] = {}
     for line in value.splitlines():
         if not line.strip():

@@ -203,7 +203,7 @@ with subtest('Cases of botocore'):
                         ok(850 < expires_in(written['accessToken'].pop('expiresAt')) < 950, f'{name}: expiresAt')
                         expected['accessToken'].pop('expiresAt')
                         is_ok(written, expected, f'{name}: cache')
-                        is_ok(stat.S_IMODE(os.stat(str(cache.child(file))).st_mode), 0o600, f'{name}: owner only')
+                        is_ok(stat.S_IMODE(cache.child(file).stat().st_mode), 0o600, f'{name}: owner only')
 
 with subtest('Sessions'):
     config = (
@@ -214,7 +214,7 @@ with subtest('Sessions'):
         provider = Pyjo.AWS.Credentials.Login.new(config=Pyjo.AWS.Config.new(profile='signin'), ua=ua)
         is_ok(provider.cache_dir, str(cache), 'cache of AWS_LOGIN_CACHE_DIRECTORY')
         is_ok(
-            os.path.basename(provider.cache_file(SESSION)),
+            provider.cache_file(SESSION).basename(),
             next(iter(CASES[0]['cacheContents'])),
             'file of the SHA-256 of the session, as botocore names it',
         )

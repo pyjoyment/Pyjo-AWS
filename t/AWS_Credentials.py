@@ -57,7 +57,7 @@ def command(expiration, count=None):
 
 def runs(count=None):
     count = count or tmp.child('count')
-    return len(count.slurp('UTF-8')) if os.path.exists(count) else 0
+    return len(count.slurp('UTF-8')) if count.exists else 0
 
 
 def iso(delta):
