@@ -29,7 +29,11 @@ default:
 #. the role of a web identity of the environment, of
    :mod:`Pyjo.AWS.Credentials.WebIdentity`,
 #. the profile of the shared files, of :mod:`Pyjo.AWS.Credentials.Profile`,
-   with its SSO, its ``credential_process`` or its keys.
+   with its role, its SSO, its ``credential_process`` or its keys,
+#. the container of ECS or EKS Pod Identity, of
+   :mod:`Pyjo.AWS.Credentials.Container`,
+#. the instance metadata of EC2, of
+   :mod:`Pyjo.AWS.Credentials.InstanceMetadata`.
 
 A provider that is not configured passes on to the next one, and the error
 of one that is configured ends the chain, as the SDKs of AWS do, so that a
@@ -46,7 +50,7 @@ Classes
 """
 
 from .. import Config, Credentials
-from . import Environment, Profile, Provider, WebIdentity
+from . import Container, Environment, InstanceMetadata, Profile, Provider, WebIdentity
 
 from collections.abc import Sequence
 from typing import Any
@@ -102,13 +106,16 @@ class Pyjo_AWS_Credentials_Chain(Provider.object):
             providers = chain.default_providers()
 
         New providers of the SDKs of AWS, with :attr:`config` and the user
-        agent of the chain, in their order.
+        agent of the chain, in their order, but the container and the
+        instance metadata, which have user agents of their own, with short
+        timeouts.
         """
-        # TODO: the container and IMDS
         return [
             Environment.new(ua=self.ua, refresh=self.refresh),
             WebIdentity.new(config=self.config, ua=self.ua, refresh=self.refresh),
             Profile.new(config=self.config, ua=self.ua, refresh=self.refresh),
+            Container.new(refresh=self.refresh),
+            InstanceMetadata.new(config=self.config, refresh=self.refresh),
         ]
 
     async def fetch(self) -> Credentials.object | None:

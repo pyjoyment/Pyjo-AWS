@@ -85,6 +85,7 @@ def environ(**values):
             HOME=str(tmp),
             AWS_CONFIG_FILE=str(tmp.child('config')),
             AWS_SHARED_CREDENTIALS_FILE=str(tmp.child('credentials')),
+            AWS_EC2_METADATA_DISABLED='true',
             AWS_ENDPOINT_URL_SSO='/sso',
             AWS_ENDPOINT_URL_SSO_OIDC='/oidc',
             **values,

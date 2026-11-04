@@ -121,6 +121,7 @@ def environ(**values):
         os.environ.update(
             AWS_CONFIG_FILE=str(tmp.child('config')),
             AWS_SHARED_CREDENTIALS_FILE=str(tmp.child('credentials')),
+            AWS_EC2_METADATA_DISABLED='true',
             AWS_ENDPOINT_URL_STS='/sts',
             **values,
         )
@@ -272,8 +273,8 @@ with subtest('Errors of roles'):
         )
         throws_ok(
             lambda: profile('imds').credentials(),
-            re.compile(r'^The credential_source Ec2InstanceMetadata of the profile imds of AWS is not supported yet'),
-            'credential_source of IMDS',
+            re.compile(r'^No credentials of AWS of the source of the role arn:aws:iam::123456789012:role/imds'),
+            'credential_source of IMDS without IMDS',
         )
         throws_ok(
             lambda: profile('nowhere').credentials(),

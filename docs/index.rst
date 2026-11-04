@@ -15,7 +15,9 @@
     api/Pyjo_AWS_Credentials
     api/Pyjo_AWS_Credentials_AssumeRole
     api/Pyjo_AWS_Credentials_Chain
+    api/Pyjo_AWS_Credentials_Container
     api/Pyjo_AWS_Credentials_Environment
+    api/Pyjo_AWS_Credentials_InstanceMetadata
     api/Pyjo_AWS_Credentials_Process
     api/Pyjo_AWS_Credentials_Profile
     api/Pyjo_AWS_Credentials_Provider
