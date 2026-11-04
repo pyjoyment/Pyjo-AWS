@@ -92,7 +92,7 @@ def credentials_action(c):
         'AccessKeyId': 'AKIDIMDS',
         'SecretAccessKey': 'secret',
         'Token': 'imds-session',
-        'Expiration': '2026-11-04T12:00:00Z',
+        'Expiration': '2099-01-01T00:00:00Z',
     })
 
 
@@ -108,7 +108,7 @@ def container_action(c):
         'AccessKeyId': 'AKIDCONTAINER',
         'SecretAccessKey': 'secret',
         'Token': 'container-session',
-        'Expiration': '2026-11-04T12:00:00Z',
+        'Expiration': '2099-01-01T00:00:00Z',
         'AccountId': '123456789012',
     })
 
@@ -122,7 +122,7 @@ def sts_action(c):
     c.render(data=(
         '<AssumeRoleResponse><AssumeRoleResult><Credentials>'
         f'<AccessKeyId>AKIDROLEOF{signer}</AccessKeyId><SecretAccessKey>secret</SecretAccessKey>'
-        '<SessionToken>role</SessionToken><Expiration>2026-11-04T12:00:00Z</Expiration>'
+        '<SessionToken>role</SessionToken><Expiration>2099-01-01T00:00:00Z</Expiration>'
         '</Credentials></AssumeRoleResult></AssumeRoleResponse>'
     ).encode())
 
@@ -217,7 +217,7 @@ try:
             credentials = Container().credentials()
             is_ok(credentials.access_key_id, 'AKIDCONTAINER', 'credentials of the full URI')
             is_ok(credentials.session_token, 'container-session', 'session token')
-            is_ok(credentials.expiration, datetime.datetime(2026, 11, 4, 12, tzinfo=datetime.UTC), 'expiration')
+            is_ok(credentials.expiration, datetime.datetime(2099, 1, 1, tzinfo=datetime.UTC), 'expiration')
             is_ok(credentials.account_id, '123456789012', 'account')
             is_ok(credentials.provider, 'container', 'provider')
             is_ok(calls()[-1]['authorization'], None, 'no authorization')
@@ -280,7 +280,7 @@ try:
             credentials = InstanceMetadata().credentials()
             is_ok(credentials.access_key_id, 'AKIDIMDS', 'credentials of the role')
             is_ok(credentials.session_token, 'imds-session', 'session token')
-            is_ok(credentials.expiration, datetime.datetime(2026, 11, 4, 12, tzinfo=datetime.UTC), 'expiration')
+            is_ok(credentials.expiration, datetime.datetime(2099, 1, 1, tzinfo=datetime.UTC), 'expiration')
             is_ok(credentials.provider, 'imds', 'provider')
             requests = calls()
             is_ok(
