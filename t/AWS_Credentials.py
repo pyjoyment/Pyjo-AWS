@@ -273,6 +273,33 @@ with subtest('Chain'):
         config = Pyjo.AWS.Config.new(profile='process')
         is_ok(Pyjo.AWS.Credentials.Chain.new(config=config).credentials().provider, 'process', 'profile of config')
 
+    # A profile of the argument, as --profile of the AWS CLI, comes over the environment, which AWS_PROFILE does not
+    with environ(AWS_ACCESS_KEY_ID='AKIDENV', AWS_SECRET_ACCESS_KEY='secret', AWS_PROFILE='static'):
+        ok(not Pyjo.AWS.Config.new().explicit_profile, 'profile of AWS_PROFILE not explicit')
+        is_ok(Pyjo.AWS.Credentials.Chain.new().credentials().provider, 'environment', 'environment over AWS_PROFILE')
+        config = Pyjo.AWS.Config.new(profile='static')
+        ok(config.explicit_profile, 'profile of the argument explicit')
+        is_ok(
+            Pyjo.AWS.Credentials.Chain.new(config=config).credentials().access_key_id, 'AKIDCONFIG', 'explicit profile'
+        )
+        config = Pyjo.AWS.Config.new(profile='nothing')
+        is_ok(
+            Pyjo.AWS.Credentials.Chain.new(config=config).credentials(), None, 'no environment for an explicit profile'
+        )
+
+    with environ(AWS_ROLE_ARN='arn:aws:iam::123456789012:role/ci'):
+        throws_ok(
+            lambda: Pyjo.AWS.Credentials.Chain.new().credentials(),
+            re.compile(r'^Partial web identity of AWS in the environment'),
+            'web identity of the environment',
+        )
+        config = Pyjo.AWS.Config.new(profile='static')
+        is_ok(
+            Pyjo.AWS.Credentials.Chain.new(config=config).credentials().access_key_id,
+            'AKIDCONFIG',
+            'no web identity of the environment for an explicit profile',
+        )
+
     with environ(AWS_PROFILE='nothing'):
         is_ok(Pyjo.AWS.Credentials.Chain.new().credentials(), None, 'no credentials')
 

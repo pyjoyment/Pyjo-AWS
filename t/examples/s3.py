@@ -167,9 +167,12 @@ def wait_for(process, port):
 
 
 # The environment of the example, of the files of the test only, whose profile has the key that S3 knows, and the
-# region of the options over the one of the profile
+# region of the options over the one of the profile; the profile of the option comes over the key of the environment,
+# which S3 does not know, as --profile of the AWS CLI does
 env = {name: value for name, value in os.environ.items() if not name.startswith(('AWS_', 'S3_'))}
 env.update(
+    AWS_ACCESS_KEY_ID='AKIDENVIRONMENT',
+    AWS_SECRET_ACCESS_KEY='environment-secret',
     AWS_CONFIG_FILE=str(tmp.child('config')),
     AWS_SHARED_CREDENTIALS_FILE=str(tmp.child('credentials')),
     AWS_EC2_METADATA_DISABLED='true',

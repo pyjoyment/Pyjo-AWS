@@ -126,6 +126,16 @@ gets them the same promise, so that a burst of requests gets them once.
 change. `__repr__` of the credentials has no secret, as a log or a traceback
 shows it.
 
+A profile of the argument `profile` of `Pyjo.AWS.Config`, its
+`explicit_profile`, takes the environment and the web identity of the
+environment out of the providers of the chain, as `create_credential_resolver`
+of botocore does for a profile of the session, as `--profile` of the AWS CLI:
+a shell with `AWS_ACCESS_KEY_ID` of other credentials gets the ones of the
+profile that a program names. `AWS_PROFILE` alone does not, as in botocore,
+so that the keys of the environment come over the profile of the
+environment. A program that takes the option `--profile`, as
+`examples/s3.py`, gives it to `Pyjo.AWS.Config`, not to `AWS_PROFILE`.
+
 ## The Client
 
 `Pyjo.AWS.Client` calls an API with a call of `Pyjo.AWS.Protocol`, an

@@ -87,6 +87,17 @@ class Pyjo_AWS_Config(Pyjo.Base.object):
         reads too, or ``default``.
         """
 
+        self.explicit_profile = bool(profile)
+        """::
+
+            boolean = config.explicit_profile
+
+        Whether the profile is the one of the argument ``profile``, as of the
+        option ``--profile`` of the AWS CLI, not of the environment, so that
+        :mod:`Pyjo.AWS.Credentials.Chain` takes the credentials of the
+        profile, and not the ones of the environment, as botocore does.
+        """
+
         self.config_file = os.path.expanduser(config_file or getenv('AWS_CONFIG_FILE') or '~/.aws/config')
         """::
 
