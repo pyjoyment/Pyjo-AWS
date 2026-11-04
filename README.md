@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/github/license/pyjoyment/Pyjo-AWS.svg)](https://github.com/pyjoyment/Pyjo-AWS/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/Pyjo-AWS?logo=pypi&logoColor=white)](https://pypi.org/project/Pyjo-AWS/)
 [![Tests](https://github.com/pyjoyment/Pyjo-AWS/actions/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/pyjoyment/Pyjo-AWS/actions/workflows/tests.yaml)
+[![Trunk Check](https://github.com/pyjoyment/Pyjo-AWS/actions/workflows/trunk-check.yaml/badge.svg?branch=main)](https://github.com/pyjoyment/Pyjo-AWS/actions/workflows/trunk-check.yaml)
 
 # Pyjo-AWS
 
