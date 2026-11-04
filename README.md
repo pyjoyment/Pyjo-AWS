@@ -132,7 +132,7 @@ signer = Pyjo.AWS.SigV4.new(service='s3', normalize_path=False, double_encode=Fa
 a bucket of S3 as a website:
 
 ```sh
-uv run python examples/aws/s3.py --profile myprofile --bucket mybucket daemon
+uv run python examples/s3.py --profile myprofile --bucket mybucket daemon
 ```
 
 ## Documentation

@@ -279,7 +279,7 @@ endpoints are those of the environment, as in production.
 `examples/` has the scripts that show what the distribution is for, a few
 calls of AWS with the credentials of any kind that the AWS CLI finds, as
 `examples/` of Pyjoyment has them, and `docs/examples.rst` includes them.
-`examples/aws/s3.py` is the counterpart of `examples/aws/s3.py` of Pyjoyment,
+`examples/s3.py` is the counterpart of `examples/aws/s3.py` of Pyjoyment,
 which serves a bucket with aiobotocore: the same application, with
 `Pyjo.AWS.Client` and no SDK.
 
@@ -299,7 +299,7 @@ loop of its own, whose connections the user agent of the client keeps, and
 the bucket in the path of the endpoint, as S3 and the servers of its API, as
 MinIO, serve it.
 
-`t/examples/aws/s3.py` runs the example and S3 of its own in processes of
+`t/examples/s3.py` runs the example and S3 of its own in processes of
 their own, as `t/AWS_Credentials_Metadata.py` runs its server, with the key of
 a profile of the files of the test, whose signature S3 checks with
 `Pyjo.AWS.SigV4` of the request as it comes, before the router reads its

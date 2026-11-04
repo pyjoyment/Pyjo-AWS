@@ -15,7 +15,7 @@ the event loop of the server, without an SDK of AWS: the content of an object,
 as it comes, of a call whose protocol forwards it to the client, ``index.html``
 of a folder, or the list of its folders and objects. ::
 
-    uv run python examples/aws/s3.py --profile myprofile --bucket mybucket daemon
+    uv run python examples/s3.py --profile myprofile --bucket mybucket daemon
 
-.. include:: ../examples/aws/s3.py
+.. include:: ../examples/s3.py
    :code: python

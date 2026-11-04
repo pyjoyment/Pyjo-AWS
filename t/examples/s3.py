@@ -16,8 +16,8 @@ import time
 # which a server of a user agent of the test would not answer
 
 tmp = Pyjo.File.tempdir()
-ROOT = Pyjo.File.curfile().dirname().dirname().dirname().dirname()
-EXAMPLE = ROOT.child('examples', 'aws', 's3.py').to_str()
+ROOT = Pyjo.File.curfile().dirname().dirname().dirname()
+EXAMPLE = ROOT.child('examples', 's3.py').to_str()
 
 S3 = tmp.child('s3.py').spew(r"""
 import Pyjo.AWS.SigV4
