@@ -4,6 +4,7 @@ import Pyjo.AWS.Credentials.Chain
 import Pyjo.AWS.Credentials.Login
 import Pyjo.AWS.Credentials.Profile
 import Pyjo.AWS.ECDSA
+import Pyjo.Date
 import Pyjo.File
 import Pyjo.JSON
 import Pyjo.UserAgent
@@ -13,7 +14,6 @@ from Pyjo.Util import b64url_decode, sha256_sum
 from Pyjoyment.Lite import *
 
 import contextlib
-import datetime
 import os
 import re
 import stat
@@ -65,8 +65,8 @@ def wait(promise):
     return result
 
 
-def iso(delta):
-    return (datetime.datetime.now(datetime.UTC) + delta).strftime('%Y-%m-%dT%H:%M:%SZ')
+def iso(seconds):
+    return Pyjo.Date.new(int(time.time()) + seconds).to_rfc3339()
 
 
 def setup(config, files):
@@ -82,7 +82,7 @@ def session_file(session=SESSION):
     return cache.child(sha256_sum(session.encode()) + '.json')
 
 
-def token(access_key_id='AKIDLOGIN', expires=datetime.timedelta(minutes=15), refresh='refresh', key=KEY):
+def token(access_key_id='AKIDLOGIN', expires=15 * 60, refresh='refresh', key=KEY):
     return {
         'accessToken': {
             'accessKeyId': access_key_id,
@@ -151,7 +151,7 @@ ua.server.app = app
 
 
 def expires_in(value):
-    return (Pyjo.AWS.Credentials.parse_time(value) - datetime.datetime.now(datetime.UTC)).total_seconds()
+    return float(Pyjo.AWS.Credentials.parse_time(value)) - time.time()
 
 
 with subtest('Cases of botocore'):
@@ -269,7 +269,7 @@ with subtest('Sessions'):
                 }
             }
         }
-        setup(config, {session_file().basename(): token(expires=datetime.timedelta(minutes=2))})
+        setup(config, {session_file().basename(): token(expires=2 * 60)})
         credentials = profile().credentials()
         is_ok(credentials.access_key_id, 'AKIDNEW', 'refreshed before the expiration')
         is_ok(calls[-1]['content_type'], 'application/json', 'JSON of the request')
@@ -277,9 +277,9 @@ with subtest('Sessions'):
         is_ok(written['refreshToken'], 'refresh2', 'new refresh token in the cache')
         is_ok(written['idToken'], 'id', 'other fields of the cache kept')
 
-        setup(config, {session_file().basename(): token(expires=datetime.timedelta(minutes=2), refresh='revoked')})
+        setup(config, {session_file().basename(): token(expires=2 * 60, refresh='revoked')})
         is_ok(profile().credentials().access_key_id, 'AKIDLOGIN', 'valid credentials after a failed refresh')
-        setup(config, {session_file().basename(): token(expires=-datetime.timedelta(minutes=1), refresh='revoked')})
+        setup(config, {session_file().basename(): token(expires=-60, refresh='revoked')})
         throws_ok(
             lambda: profile().credentials(),
             re.compile(rf'^The login session {re.escape(SESSION)} of AWS has ended \(TOKEN_EXPIRED\): aws login'),
@@ -291,7 +291,7 @@ with subtest('Sessions'):
             'cache kept after a failed refresh',
         )
 
-        setup(config, {session_file().basename(): token(expires=-datetime.timedelta(minutes=1), key='broken')})
+        setup(config, {session_file().basename(): token(expires=-60, key='broken')})
         throws_ok(
             lambda: profile().credentials(),
             re.compile(r'^Cannot refresh the credentials of the login session .*: Invalid dpopKey of the cache'),

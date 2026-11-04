@@ -5,6 +5,7 @@ import Pyjo.AWS.Credentials.Environment
 import Pyjo.AWS.Credentials.Process
 import Pyjo.AWS.Credentials.Profile
 import Pyjo.AWS.Credentials.Provider
+import Pyjo.Date
 import Pyjo.Exception
 import Pyjo.File
 import Pyjo.JSON
@@ -15,18 +16,18 @@ from Pyjo.Test import *
 from Pyjoyment.Lite import *
 
 import contextlib
-import datetime
 import os
 import re
 import shlex
 import sys
+import time
 
 
 # Credentials of AWS and their providers
 
 tmp = Pyjo.File.tempdir()
 
-NOW = datetime.datetime.now(datetime.UTC)
+NOW = int(time.time())
 
 # A program of credential_process, which prints the credentials of its arguments, and counts its runs in a file
 SCRIPT = tmp.child('credentials.py').spew("""\
@@ -60,8 +61,8 @@ def runs(count=None):
     return len(count.slurp('UTF-8')) if count.exists else 0
 
 
-def iso(delta):
-    return (NOW + delta).strftime('%Y-%m-%dT%H:%M:%SZ')
+def iso(seconds):
+    return Pyjo.Date.new(NOW + seconds).to_rfc3339()
 
 
 @contextlib.contextmanager
@@ -103,7 +104,7 @@ aws_account_id = 123456789012
 aws_access_key_id = AKIDPARTIAL
 
 [profile process]
-credential_process = {command(iso(datetime.timedelta(hours=1)))}
+credential_process = {command(iso(3600))}
 
 [profile nothing]
 region = eu-central-1
@@ -121,19 +122,19 @@ with subtest('Credentials'):
     is_ok(credentials.session_token, None, 'no session token')
     is_ok(credentials.expires_in(), None, 'no expiration')
     is_ok(repr(credentials), "<Credentials access_key_id='AKIDEXAMPLE' provider=None>", 'no secret in repr')
-    credentials.expiration = NOW + datetime.timedelta(minutes=10)
+    credentials.expiration = Pyjo.Date.new(NOW + 600)
     is_ok(credentials.expires_in(NOW), 600.0, 'expires in seconds')
+    is_ok(Pyjo.AWS.Credentials.parse_time('2026-11-03T12:00:00Z').to_rfc3339(), '2026-11-03T12:00:00Z', 'time in UTC')
     is_ok(
-        Pyjo.AWS.Credentials.parse_time('2026-11-03T12:00:00Z'),
-        datetime.datetime(2026, 11, 3, 12, tzinfo=datetime.UTC),
-        'time in UTC',
-    )
-    is_ok(
-        Pyjo.AWS.Credentials.parse_time('2026-11-03T13:00:00+01:00').astimezone(datetime.UTC),
-        datetime.datetime(2026, 11, 3, 12, tzinfo=datetime.UTC),
+        Pyjo.AWS.Credentials.parse_time('2026-11-03T13:00:00+01:00').to_rfc3339(),
+        '2026-11-03T12:00:00Z',
         'time with an offset',
     )
-    is_ok(Pyjo.AWS.Credentials.parse_time('2026-11-03T12:00:00').tzinfo, datetime.UTC, 'time without a zone in UTC')
+    is_ok(
+        Pyjo.AWS.Credentials.parse_time('2026-11-03T12:00:00').to_rfc3339(),
+        '2026-11-03T12:00:00Z',
+        'time without a zone in UTC',
+    )
     throws_ok(
         lambda: Pyjo.AWS.Credentials.parse_time('tomorrow'),
         re.compile(r"^Invalid time of the expiration of credentials of AWS: 'tomorrow'"),
@@ -159,7 +160,7 @@ with subtest('Environment'):
         is_ok(credentials.access_key_id, 'AKIDENV', 'access key ID')
         is_ok(credentials.secret_access_key, 'secret', 'secret access key')
         is_ok(credentials.session_token, 'token', 'session token')
-        is_ok(credentials.expiration, datetime.datetime(2026, 11, 3, 12, tzinfo=datetime.UTC), 'expiration')
+        is_ok(credentials.expiration.to_rfc3339(), '2026-11-03T12:00:00Z', 'expiration')
         is_ok(credentials.account_id, '123456789012', 'account ID')
         is_ok(credentials.provider, 'environment', 'provider')
         os.environ['AWS_ACCESS_KEY_ID'] = 'AKIDCHANGED'
@@ -177,7 +178,7 @@ with subtest('Environment'):
         like_ok(str(result['error']), re.compile(r'no AWS_ACCESS_KEY_ID'), 'partial credentials rejected')
 
 with subtest('Process'):
-    expiration = iso(datetime.timedelta(hours=1))
+    expiration = iso(3600)
     credentials = Pyjo.AWS.Credentials.Process.new(command=command(expiration)).credentials()
     is_ok(credentials.access_key_id, 'AKIDPROCESS', 'access key ID')
     is_ok(credentials.session_token, 'token', 'session token')
@@ -316,7 +317,7 @@ with subtest('Chain'):
 
 with subtest('Cache and refresh'):
     count = tmp.child('cached')
-    provider = Pyjo.AWS.Credentials.Process.new(command=command(iso(datetime.timedelta(hours=1)), count))
+    provider = Pyjo.AWS.Credentials.Process.new(command=command(iso(3600), count))
     ok(not provider.is_fresh(), 'nothing cached')
     provider.credentials()
     ok(provider.is_fresh(), 'fresh credentials')
@@ -324,7 +325,7 @@ with subtest('Cache and refresh'):
     is_ok(runs(count), 1, 'cached credentials')
 
     count = tmp.child('expiring')
-    provider = Pyjo.AWS.Credentials.Process.new(command=command(iso(datetime.timedelta(minutes=4)), count))
+    provider = Pyjo.AWS.Credentials.Process.new(command=command(iso(4 * 60), count))
     provider.credentials()
     ok(not provider.is_fresh(), 'credentials about to expire')
     provider.credentials()

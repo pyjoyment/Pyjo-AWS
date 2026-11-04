@@ -13,7 +13,6 @@ from Pyjo.Test import *
 from Pyjoyment.Lite import *
 
 import contextlib
-import datetime
 import os
 import re
 
@@ -207,7 +206,7 @@ with subtest('AssumeRole'):
         credentials = provider.credentials()
         is_ok(credentials.access_key_id, 'AKIDDEPLOY', 'credentials of the role')
         is_ok(credentials.session_token, 'token-deploy', 'session token')
-        is_ok(credentials.expiration, datetime.datetime(2099, 1, 1, tzinfo=datetime.UTC), 'expiration')
+        is_ok(credentials.expiration.to_rfc3339(), '2099-01-01T00:00:00Z', 'expiration')
         is_ok(credentials.account_id, '123456789012', 'account of the ARN of the user')
         is_ok(credentials.provider, 'assume-role', 'provider')
         is_ok(calls[-1]['signer'], 'AKIDSOURCE', 'signed with the source')

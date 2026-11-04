@@ -4,6 +4,7 @@ import Pyjo.AWS.Credentials.Chain
 import Pyjo.AWS.Credentials.Profile
 import Pyjo.AWS.Credentials.SSO
 import Pyjo.AWS.Error
+import Pyjo.Date
 import Pyjo.File
 import Pyjo.JSON
 import Pyjo.UserAgent
@@ -13,11 +14,11 @@ from Pyjo.Util import sha1_sum
 from Pyjoyment.Lite import *
 
 import contextlib
-import datetime
 import os
 import re
 import stat
 import sys
+import time
 
 
 # The credentials of IAM Identity Center, of the token of the cache of the AWS CLI, refreshed with SSO OIDC, against
@@ -26,13 +27,13 @@ import sys
 tmp = Pyjo.File.tempdir()
 cache = tmp.child('.aws', 'sso', 'cache').make_path()
 
-NOW = datetime.datetime.now(datetime.UTC)
+NOW = int(time.time())
 START_URL = 'https://company.awsapps.com/start'
 LEGACY_URL = 'https://legacy.awsapps.com/start'
 
 
-def iso(delta):
-    return (NOW + delta).strftime('%Y-%m-%dT%H:%M:%SZ')
+def iso(seconds):
+    return Pyjo.Date.new(NOW + seconds).to_rfc3339()
 
 
 tmp.child('config').spew(f"""\
@@ -109,7 +110,7 @@ def token_file(key):
     return cache.child(sha1_sum(key.encode()) + '.json')
 
 
-def write_token(key, token, expires, refresh=None, registered=datetime.timedelta(days=30)):
+def write_token(key, token, expires, refresh=None, registered=30 * 86400):
     data = {'startUrl': START_URL, 'region': 'eu-central-1', 'accessToken': token, 'expiresAt': iso(expires)}
     if refresh is not None:
         data.update(
@@ -179,12 +180,12 @@ with subtest('Token of a session'):
         is_ok(provider('sso').cache_dir, str(cache), 'cache of the AWS CLI')
         is_ok(provider('sso').cache_file('company'), str(token_file('company')), 'file of the SHA-1 of the session')
 
-        write_token('company', 'valid', datetime.timedelta(hours=8))
+        write_token('company', 'valid', 8 * 3600)
         credentials = provider('sso').credentials()
         is_ok(credentials.access_key_id, 'AKIDSSOVALID', 'credentials of the role')
         is_ok(credentials.secret_access_key, 'secret', 'secret access key')
         is_ok(credentials.session_token, 'session', 'session token')
-        is_ok(credentials.expiration, datetime.datetime(2026, 11, 3, 12, tzinfo=datetime.UTC), 'expiration of millis')
+        is_ok(credentials.expiration.to_rfc3339(), '2026-11-03T12:00:00Z', 'expiration of millis')
         is_ok(credentials.account_id, '123456789012', 'account')
         is_ok(credentials.provider, 'sso', 'provider')
         is_ok(seen['token'], 'valid', 'token of the cache')
@@ -198,7 +199,7 @@ with subtest('Token of a session'):
 
 with subtest('Refresh'):
     with environ():
-        write_token('company', 'expiring', datetime.timedelta(minutes=2), 'refresh')
+        write_token('company', 'expiring', 2 * 60, 'refresh')
         oidc = calls['oidc']
         credentials = provider('sso').credentials()
         is_ok(calls['oidc'], oidc + 1, 'token refreshed before it expires')
@@ -217,7 +218,7 @@ with subtest('Refresh'):
         is_ok(token['accessToken'], 'refreshed', 'new token in the cache')
         is_ok(token['refreshToken'], 'refresh2', 'new refresh token in the cache')
         is_ok(token['startUrl'], START_URL, 'the other fields kept')
-        expires_in = (Pyjo.AWS.Credentials.parse_time(token['expiresAt']) - NOW).total_seconds()
+        expires_in = float(Pyjo.AWS.Credentials.parse_time(token['expiresAt'])) - NOW
         ok(3500 < expires_in < 3700, 'expiration of expiresIn')
         if sys.platform == 'win32':
             skip('no modes of files on Windows')
@@ -226,16 +227,16 @@ with subtest('Refresh'):
         provider('sso').credentials()
         is_ok(calls['oidc'], oidc + 1, 'new token not refreshed again')
 
-        write_token('company', 'expiring', datetime.timedelta(minutes=2), 'refresh')
+        write_token('company', 'expiring', 2 * 60, 'refresh')
         result = wait(provider('sso').credentials_p())
         is_ok(result['value'].access_key_id, 'AKIDSSOREFRESHED', 'refreshed, non-blocking')
 
-        write_token('company', 'expiring', datetime.timedelta(minutes=2), 'revoked')
+        write_token('company', 'expiring', 2 * 60, 'revoked')
         credentials = provider('sso').credentials()
         is_ok(credentials.access_key_id, 'AKIDSSOEXPIRING', 'token of a failed refresh while it is valid')
         is_ok(read_token('company')['accessToken'], 'expiring', 'cache not changed')
 
-        write_token('company', 'expiring', datetime.timedelta(minutes=-1), 'revoked')
+        write_token('company', 'expiring', -60, 'revoked')
         throws_ok(
             lambda: provider('sso').credentials(),
             re.compile(
@@ -245,7 +246,7 @@ with subtest('Refresh'):
             'failed refresh of an expired token',
         )
 
-        write_token('company', 'expiring', datetime.timedelta(minutes=-1), 'refresh', datetime.timedelta(days=-1))
+        write_token('company', 'expiring', -60, 'refresh', -86400)
         oidc = calls['oidc']
         throws_ok(
             lambda: provider('sso').credentials(),
@@ -254,7 +255,7 @@ with subtest('Refresh'):
         )
         is_ok(calls['oidc'], oidc, 'no refresh of an expired registration')
 
-        write_token('company', 'expiring', datetime.timedelta(minutes=-1))
+        write_token('company', 'expiring', -60)
         throws_ok(
             lambda: provider('sso').credentials(),
             re.compile(r'^The token of the SSO of company of AWS expired at '),
@@ -265,7 +266,7 @@ with subtest('Refresh'):
 
 with subtest('Legacy profile'):
     with environ():
-        write_token(LEGACY_URL, 'legacy', datetime.timedelta(minutes=2), 'refresh')
+        write_token(LEGACY_URL, 'legacy', 2 * 60, 'refresh')
         oidc = calls['oidc']
         credentials = provider('legacy').credentials()
         is_ok(credentials.access_key_id, 'AKIDSSOLEGACY', 'token of the start URL')
@@ -273,7 +274,7 @@ with subtest('Legacy profile'):
         is_ok(seen['role_name'], 'Admin', 'role name')
         is_ok(calls['oidc'], oidc, 'token of a legacy profile not refreshed')
 
-        write_token(LEGACY_URL, 'legacy', datetime.timedelta(minutes=-1))
+        write_token(LEGACY_URL, 'legacy', -60)
         throws_ok(
             lambda: provider('legacy').credentials(),
             re.compile(rf'^The token of the SSO of {re.escape(LEGACY_URL)} of AWS expired at '),
@@ -318,7 +319,7 @@ with subtest('Errors'):
             'region of the profile and of the session',
         )
 
-        write_token('company', 'unknown', datetime.timedelta(hours=8))
+        write_token('company', 'unknown', 8 * 3600)
         try:
             provider('sso').credentials()
             fail_ok('no error of SSO')
@@ -328,7 +329,7 @@ with subtest('Errors'):
 
 with subtest('Profile and chain'):
     with environ(AWS_PROFILE='sso'):
-        write_token('company', 'valid', datetime.timedelta(hours=8))
+        write_token('company', 'valid', 8 * 3600)
         credentials = Pyjo.AWS.Credentials.Profile.new(ua=ua).credentials()
         is_ok(credentials.provider, 'sso', 'SSO of the profile')
         credentials = Pyjo.AWS.Credentials.Chain.new(ua=ua).credentials()

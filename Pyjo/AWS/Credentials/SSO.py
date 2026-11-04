@@ -65,7 +65,6 @@ from .. import Client, Config, Credentials
 from ..Protocol import RestJSON
 from . import Provider
 
-import datetime
 import time
 
 from typing import Any, cast
@@ -196,9 +195,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
             access_key_id=fields['accessKeyId'],
             secret_access_key=fields['secretAccessKey'],
             session_token=fields.get('sessionToken') or None,
-            expiration=(
-                Pyjo.Date.new(expiration / 1000).to_datetime() if isinstance(expiration, (int, float)) else None
-            ),
+            expiration=Pyjo.Date.new(expiration / 1000) if isinstance(expiration, (int, float)) else None,
             account_id=cast(str, account_id),
             provider='sso',
         )
@@ -230,8 +227,8 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
         if not cached.get('accessToken') or not cached.get('expiresAt'):
             raise Pyjo.Exception.new(f'Invalid token of the SSO of {key} of AWS in {path}: {login}')
 
-        now = datetime.datetime.now(datetime.UTC)
-        expires_in = (Credentials.parse_time(cached['expiresAt']) - now).total_seconds()
+        now = time.time()
+        expires_in = float(Credentials.parse_time(cached['expiresAt'])) - now
         if expires_in > self.refresh:
             return cached['accessToken']
 
@@ -242,7 +239,7 @@ class Pyjo_AWS_Credentials_SSO(Provider.object):
             and cached.get('clientId')
             and cached.get('clientSecret')
             and isinstance(registered, str)
-            and Credentials.parse_time(registered) > now
+            and float(Credentials.parse_time(registered)) > now
         ):
             call = RestJSON.new(
                 'POST',

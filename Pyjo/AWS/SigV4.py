@@ -49,8 +49,6 @@ from Pyjo.Util import getenv, hmac_sha256_bytes, hmac_sha256_sum, sha256_sum, ur
 
 from . import Credentials
 
-import datetime
-
 
 _ALGORITHM = 'AWS4-HMAC-SHA256'
 
@@ -224,19 +222,19 @@ class Pyjo_AWS_SigV4(Pyjo.Base.object):
         return f'{self._date(req)[:8]}/{self.region}/{self.service}/aws4_request'
 
     def sign(
-        self, req: Pyjo.Message.Request.object, date: Pyjo.Date.object | datetime.datetime | float | None = None
+        self, req: Pyjo.Message.Request.object, date: Pyjo.Date.object | float | None = None
     ) -> Pyjo.Message.Request.object:
         """::
 
             req = signer.sign(req)
             req = signer.sign(req, Pyjo.Date.new('2015-08-30T12:36:00Z'))
-            req = signer.sign(req, datetime.datetime(2015, 8, 30, 12, 36, tzinfo=datetime.UTC))
+            req = signer.sign(req, 1440938160)
 
-        Sign a request at a date of :mod:`Pyjo.Date`, a
-        :class:`datetime.datetime` or the epoch, now by default: set its
-        headers ``Host``, ``X-Amz-Date``, ``X-Amz-Security-Token`` with a
-        :attr:`session_token` and ``X-Amz-Content-Sha256`` with
-        :attr:`content_sha256`, and its header ``Authorization``.
+        Sign a request at a date of :mod:`Pyjo.Date` or the epoch, now by
+        default: set its headers ``Host``, ``X-Amz-Date``,
+        ``X-Amz-Security-Token`` with a :attr:`session_token` and
+        ``X-Amz-Content-Sha256`` with :attr:`content_sha256`, and its header
+        ``Authorization``.
         """
         if self.access_key_id is None or self.secret_access_key is None:
             raise Pyjo.Exception.new('No credentials of AWS')
