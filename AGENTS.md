@@ -98,6 +98,16 @@ taken: the client signs its request in the event `start` of its own user
 agent, which a provider of credentials with a user agent of its own would
 not emit otherwise, and the request would go out unsigned, without an error.
 
+A `Command` has an environment and a timeout, for `Pyjo.GCP.Steps`, whose
+copy this is, where the executable of an external account of Google Cloud
+needs them, as `subprocess.run` of google-auth gives them: the blocking run
+passes them to `subprocess.run`, and the non-blocking one gives the
+environment to `Pyjo.IOLoop.ChildProcess` and kills the process with a timer
+of its reactor, which it removes when the process exits first, so that the
+loop does not wait for it. A killed process is an exception of the timeout,
+not its exit code. `credential_process` of the AWS CLI has neither, so
+`Pyjo.AWS.Credentials.Process` passes none.
+
 ## The Credentials
 
 A provider of `Pyjo.AWS.Credentials.Provider` gets its credentials in
