@@ -274,6 +274,47 @@ reached by the user agents of the providers, and a server in a thread is
 not either, as the event loops of Pyjo are not safe in threads; the
 endpoints are those of the environment, as in production.
 
+## The Examples
+
+`examples/` has the scripts that show what the distribution is for, a few
+calls of AWS with the credentials of any kind that the AWS CLI finds, as
+`examples/` of Pyjoyment has them, and `docs/examples.rst` includes them.
+`examples/s3.py` is the counterpart of `examples/aws/s3.py` of Pyjoyment,
+which serves a bucket with aiobotocore: the same application, with
+`Pyjo.AWS.Client` and no SDK.
+
+The content of an object goes to the client as it comes, of `GetObject`, a
+subclass of `Pyjo.AWS.Protocol.RestXML` in the example, whose transaction
+forwards the chunks of a response of `200` in the event `read` of its
+content, each one once the client has read the one before, as the helper
+`proxy.start_p` of Pyjoyment does, and whose result is `None`, so that the
+body is not kept; the error of S3, as `NoSuchKey`, is read as for any call.
+`proxy.start_p` itself does not do, as it starts the transaction with the
+user agent of the application, and the request of a client is signed and
+started by the client. A client that goes away before the end of the object
+closes the connection to S3, whose error the action ignores.
+
+The event `read` comes with an empty chunk too, when the headers come in a
+read of their own, as S3 sends them in a record of TLS of their own, which
+the example skips, as `proxy.start_p` does: `write` of an empty chunk ends
+the response, with the headers only, and the client waits for the rest of
+the object until the server closes the connection.
+
+The example has a client of S3 for each thread, as each thread has an event
+loop of its own, whose connections the user agent of the client keeps, and
+the bucket in the path of the endpoint, as S3 and the servers of its API, as
+MinIO, serve it.
+
+`t/examples/s3.py` runs the example and S3 of its own in processes of
+their own, as `t/AWS_Credentials_Metadata.py` runs its server, with the key of
+a profile of the files of the test, whose signature S3 checks with
+`Pyjo.AWS.SigV4` of the request as it comes, before the router reads its
+path. S3 does not compress its responses, as Pyjoyment does for a user agent
+that accepts gzip, so that the large object comes in chunks, and a client
+that goes away before its end is the case of the closed connection. The
+content of `slow.txt` comes after its headers, as of S3 over TLS, whose empty
+chunk a server on the loopback without TLS does not send otherwise.
+
 ## Imports of the Package
 
 The modules of the distribution import the package and each other relatively,

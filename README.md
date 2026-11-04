@@ -44,10 +44,70 @@ pip install git+https://github.com/pyjoyment/Pyjo-AWS
 
 ## Usage
 
-`Pyjo.AWS.SigV4` signs a request in the event `start` of the user agent, with
-the credentials of the environment, `AWS_ACCESS_KEY_ID`,
-`AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN`, and the region of
-`AWS_REGION`:
+`Pyjo.AWS.Client` calls an operation of an API of AWS, with the credentials,
+the region and the endpoint that the AWS CLI finds: of the environment, of a
+profile with its keys, SSO of `aws sso login`, a role or
+`credential_process`, of a web identity, of the container of ECS or EKS Pod
+Identity, or of the instance of EC2. The call is the operation in the
+protocol of its API, with the names that its documentation has, and its
+result is the XML of the response, as a `Pyjo.DOM` object, or its JSON:
+
+```python
+import Pyjo.AWS.Client
+import Pyjo.AWS.Protocol.Query
+import Pyjo.AWS.Protocol.RestJSON
+
+sts = Pyjo.AWS.Client.new(service='sts')
+print(sts.call(Pyjo.AWS.Protocol.Query.new('GetCallerIdentity', version='2011-06-15')).at('Arn').text)
+
+lambda_ = Pyjo.AWS.Client.new(service='lambda', region='eu-central-1')
+print(lambda_.call(Pyjo.AWS.Protocol.RestJSON.new('GET', '/2018-10-31/layers'))['Layers'])
+```
+
+The protocols are `Query`, of STS, IAM, SQS and SNS, `JSON`, of DynamoDB,
+KMS and Secrets Manager, `RestJSON`, of Lambda and API Gateway, and
+`RestXML`, of S3 and Route 53:
+
+```python
+import Pyjo.AWS.Config
+import Pyjo.AWS.Protocol.JSON
+import Pyjo.AWS.Protocol.RestXML
+
+s3 = Pyjo.AWS.Client.new(service='s3', config=Pyjo.AWS.Config.new(profile='dev'))
+dom = s3.call(Pyjo.AWS.Protocol.RestXML.new('GET', '/my-bucket', query={'list-type': 2, 'prefix': 'logs/'}))
+print(dom.find('Contents > Key').map('text').join('\n'))
+
+secrets = Pyjo.AWS.Client.new(service='secretsmanager')
+call = Pyjo.AWS.Protocol.JSON.new('secretsmanager.GetSecretValue', {'SecretId': 'db'})
+print(secrets.call(call)['SecretString'])
+```
+
+`call_p` is the same call, non-blocking, which returns a `Pyjo.Promise`
+object, as an action of Pyjoyment awaits it:
+
+```python
+@get('/whoami')
+async def whoami(c):
+    dom = await sts.call_p(Pyjo.AWS.Protocol.Query.new('GetCallerIdentity', version='2011-06-15'))
+    c.render(json={'arn': dom.at('Arn').text})
+```
+
+An error of AWS is a `Pyjo.AWS.Error`, with the code and the message of the
+response:
+
+```python
+import Pyjo.AWS.Error
+
+try:
+    s3.call(Pyjo.AWS.Protocol.RestXML.new('GET', '/my-bucket/missing.txt'))
+except Pyjo.AWS.Error.object as e:
+    print(e.code, e.status, e.request_id)
+```
+
+`Pyjo.AWS.SigV4` signs a request of the user agent without the client, as
+in the event `start` of the user agent, with the credentials of the
+environment, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
+`AWS_SESSION_TOKEN`, and the region of `AWS_REGION`:
 
 ```python
 import Pyjo.AWS.SigV4
@@ -60,10 +120,19 @@ print(ua.get('https://lambda.eu-central-1.amazonaws.com/2018-10-31/layers').resu
 ```
 
 S3 signs its path as it is sent, and the hash of the body in a header of its
-own:
+own, as the client signs it:
 
 ```python
 signer = Pyjo.AWS.SigV4.new(service='s3', normalize_path=False, double_encode=False, content_sha256=True)
+```
+
+## Examples
+
+[`examples/`](examples) has applications of Pyjoyment.Lite that call AWS, as
+a bucket of S3 as a website:
+
+```sh
+uv run python examples/s3.py --profile myprofile --bucket mybucket daemon
 ```
 
 ## Documentation
