@@ -34,4 +34,3 @@
     api/Pyjo_AWS_Protocol_RestJSON
     api/Pyjo_AWS_Protocol_RestXML
     api/Pyjo_AWS_SigV4
-    api/Pyjo_AWS_Steps

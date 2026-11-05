@@ -38,7 +38,7 @@ endpoint, as IAM, takes it as :attr:`~Pyjo_AWS_Client.endpoint`. ::
     iam = Pyjo.AWS.Client.new(service='iam', endpoint='https://iam.amazonaws.com', region='us-east-1')
 
 A provider of credentials calls an API of AWS with
-:meth:`~Pyjo_AWS_Client.steps`, which :mod:`Pyjo.AWS.Steps` runs with its
+:meth:`~Pyjo_AWS_Client.steps`, which :mod:`Pyjo.Steps` runs with its
 own steps, as a role of STS with the credentials of its source: ::
 
     async def fetch(self):
@@ -59,11 +59,12 @@ Classes
 import Pyjo.Base
 import Pyjo.Exception
 import Pyjo.Promise
+import Pyjo.Steps
 import Pyjo.Transaction.HTTP
 import Pyjo.URL
 import Pyjo.UserAgent
 
-from . import Config, Credentials, Protocol, SigV4, Steps
+from . import Config, Credentials, Protocol, SigV4
 from .Credentials import Provider
 
 from typing import Any
@@ -249,16 +250,16 @@ class Pyjo_AWS_Client(Pyjo.Base.object):
             )
         return SigV4.new(service=self.service, region=region, credentials=credentials)
 
-    def steps[T](self, call: Protocol.object[T], credentials: Credentials.object | None = None) -> Steps.object[T]:
+    def steps[T](self, call: Protocol.object[T], credentials: Credentials.object | None = None) -> Pyjo.Steps.object[T]:
         """::
 
             result = await client.steps(call)
             result = await client.steps(call, credentials)
 
-        The :mod:`Pyjo.AWS.Steps` of a call, of a provider of credentials,
+        The :mod:`Pyjo.Steps` of a call, of a provider of credentials,
         with credentials, or those of :attr:`credentials` by default.
         """
-        return Steps.Steps(self._steps(call, credentials))
+        return Pyjo.Steps.Steps(self._steps(call, credentials))
 
     async def _steps[T](self, call: Protocol.object[T], credentials: Credentials.object | None) -> T:
         if not self.unsigned and credentials is None:
@@ -266,7 +267,7 @@ class Pyjo_AWS_Client(Pyjo.Base.object):
         tx = call.build_tx(self.ua, Pyjo.URL.new(self.endpoint_url()))
         if credentials is not None and not self.unsigned:
             self._sign_on_start(tx, self.signer(credentials))
-        return call.result(await Steps.Request.new(tx, self.ua))
+        return call.result(await Pyjo.Steps.Request.new(tx, self.ua))
 
     # The request is signed in the event start of the transaction, of the user agent that the request of the steps
     # names, as it is complete then; and of that transaction only, as the user agent may start others meanwhile

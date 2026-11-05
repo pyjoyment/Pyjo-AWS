@@ -477,11 +477,11 @@ with subtest('Generators and coroutines'):
 
     throws_ok(
         lambda: Promised().credentials(),
-        re.compile(r'^Steps of AWS await \w+: only a Request, a Command and Steps'),
+        re.compile(r'^Steps await \w+: only a Request, a Command, a Sleep and Steps'),
         'promise awaited, not thrown in',
     )
     result = wait(Promised().credentials_p())
     ok(isinstance(result['error'], TypeError), 'promise awaited, non-blocking')
-    like_ok(str(result['error']), re.compile(r'^Steps of AWS await'), 'error of the promise')
+    like_ok(str(result['error']), re.compile(r'^Steps await'), 'error of the promise')
 
 done_testing()
