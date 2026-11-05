@@ -386,6 +386,17 @@ with subtest('Requests'):
     result = wait(HTTP('/credentials', ua=ua).credentials_p())
     is_ok(result['value'].access_key_id, 'AKIDHTTP', 'request, non-blocking')
 
+    started = {'provider': 0, 'chain': 0}
+    ua.on('start', lambda ua, tx: started.update(provider=started['provider'] + 1))
+    chain_ua = Pyjo.UserAgent.new()
+    chain_ua.on('start', lambda ua, tx: started.update(chain=started['chain'] + 1))
+    chain = Pyjo.AWS.Credentials.Chain.new(providers=[HTTP('/credentials', ua=ua)], ua=chain_ua)
+    is_ok(chain.credentials().access_key_id, 'AKIDHTTP', 'request of a provider in a chain, blocking')
+    chain = Pyjo.AWS.Credentials.Chain.new(providers=[HTTP('/credentials', ua=ua)], ua=chain_ua)
+    result = wait(chain.credentials_p())
+    is_ok(result['value'].access_key_id, 'AKIDHTTP', 'request of a provider in a chain, non-blocking')
+    is_deeply_ok(started, {'provider': 2, 'chain': 0}, 'started by the user agent of the provider')
+
     closed = Pyjo.UserAgent.new(connect_timeout=2)
     refused = 'http://127.0.0.1:1/credentials'
     throws_ok(

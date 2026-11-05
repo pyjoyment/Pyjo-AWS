@@ -99,6 +99,9 @@ A `Request` names the user agent that starts it, or the one of `run` is
 taken: the client signs its request in the event `start` of its own user
 agent, which a provider of credentials with a user agent of its own would
 not emit otherwise, and the request would go out unsigned, without an error.
+`start` of a provider names the user agent of the provider, so that the
+container and IMDS keep their short timeouts in a chain, whose steps run
+with the user agent of the chain or of the client, of its timeouts.
 
 A `Command` has an environment and a timeout, which the executable of an
 external account of Google Cloud of Pyjo-GCP needs; a killed process is an
