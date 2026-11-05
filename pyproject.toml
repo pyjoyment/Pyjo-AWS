@@ -21,7 +21,7 @@ classifiers = [
 
 # The signatures of ECDSA of Pyjo.AWS.ECDSA, for the DPoP of aws login, of cryptography instead of Python
 [project.optional-dependencies]
-cryptography = ["cryptography>=42.0.0"]
+cryptography = ["cryptography>=50.0.2"]
 
 [project.urls]
 Homepage = "https://github.com/pyjoyment/Pyjo-AWS"
