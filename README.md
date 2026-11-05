@@ -44,10 +44,12 @@ Python itself without it:
 pip install 'Pyjo-AWS[cryptography]'
 ```
 
-The development version is installed from the Git repository:
+The development version is installed from the Git repository with uv, which
+takes the version of Pyjoyment that it needs from Git too, before its
+release:
 
 ```sh
-pip install git+https://github.com/pyjoyment/Pyjo-AWS
+uv pip install git+https://github.com/pyjoyment/Pyjo-AWS
 ```
 
 ## Usage

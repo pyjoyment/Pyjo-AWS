@@ -10,14 +10,14 @@ on:
   workflow_dispatch:
     inputs:
       pyjoyment-ref:
-        description: The branch, tag or commit of Pyjoyment to test against, or the release of uv.lock
+        description: The branch, tag or commit of Pyjoyment to test against, or the one of uv.lock
         required: false
 
 permissions:
   contents: read
 
 jobs:
-  # The tests of the distribution, against the release of Pyjoyment of
+  # The tests of the distribution, against the Pyjoyment of
   # uv.lock. Not the suite of Pyjoyment, which nothing of the distribution
   # changes, unlike the one of a reactor, which runs on it.
   prove:

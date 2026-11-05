@@ -23,8 +23,8 @@ CLI read them: the settings of a profile, the sections ``sso-session`` and
 
 The files are those of the ``AWS_CONFIG_FILE`` and
 ``AWS_SHARED_CREDENTIALS_FILE`` environment variables, or of the home
-directory, and the profile is the one of the ``AWS_PROFILE`` environment
-variable, or ``default``. A profile is ``[profile name]`` or ``[default]`` in
+directory, and the profile is the one of the ``AWS_PROFILE`` or
+``AWS_DEFAULT_PROFILE`` environment variable, or ``default``. A profile is ``[profile name]`` or ``[default]`` in
 the configuration file, and ``[name]`` in the file of the credentials, whose
 settings come first. The names of the settings are in lower case, as the
 SDKs of AWS read them, and a setting without a value on its line has the

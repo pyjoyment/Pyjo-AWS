@@ -81,7 +81,7 @@ class Pyjo_AWS_Protocol_Query(Protocol.object[Pyjo.DOM.object]):
             params = call.params
 
         The parameters of the action, as the documentation of the API names
-        them, without ``None`` values.
+        them, whose ``None`` values the request leaves out.
         """
 
         self.version = version

@@ -24,8 +24,8 @@ percent-encoded already, with the parameters of its query, its headers and
 its body, as XML. The result is the XML of the response, as a
 :mod:`Pyjo.DOM` object, the body of an object of S3 of another type, or
 ``None`` without a body, as the response of ``PUT`` of an object of S3,
-whose result is in its headers, which :attr:`tx` of the error has, and the
-transaction of :meth:`~Pyjo.AWS.Client.Pyjo_AWS_Client.steps`.
+whose result is in its headers, which a subclass of the call reads in its
+:meth:`~Pyjo.AWS.Protocol.Pyjo_AWS_Protocol.result`, and :attr:`~Pyjo.AWS.Error.Pyjo_AWS_Error.tx` of an error has.
 
 The error of the response is the code and the message of its element
 ``Error``, or its status, as ``404`` of ``HEAD``, without a body.
@@ -105,8 +105,8 @@ class Pyjo_AWS_Protocol_RestXML(Protocol.object[Any]):
             query = call.query
 
         The parameters of the query, whose values are strings, ``true`` or
-        ``false`` of booleans and the strings of the others, without ``None``
-        values.
+        ``false`` of booleans and the strings of the others, whose ``None``
+        values the request leaves out.
         """
 
         self.headers = dict(headers or {})

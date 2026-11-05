@@ -105,8 +105,8 @@ class Pyjo_AWS_Protocol_RestJSON(Protocol.object[Any]):
             query = call.query
 
         The parameters of the query, whose values are strings, ``true`` or
-        ``false`` of booleans and the strings of the others, without ``None``
-        values.
+        ``false`` of booleans and the strings of the others, whose ``None``
+        values the request leaves out.
         """
 
         self.headers = dict(headers or {})
