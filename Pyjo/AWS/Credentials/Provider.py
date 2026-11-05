@@ -216,7 +216,7 @@ class Pyjo_AWS_Credentials_Provider(Pyjo.Base.object):
         A transaction for :meth:`fetch` to await, which :attr:`ua` starts, and
         which it gives back with its response.
         """
-        return Pyjo.Steps.Request.new(tx)
+        return Pyjo.Steps.Request.new(tx, self.ua)
 
     def steps(self) -> Pyjo.Steps.object[Credentials.object | None]:
         """::
