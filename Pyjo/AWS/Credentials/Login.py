@@ -27,7 +27,7 @@ CLI, in ``~/.aws/login/cache``, of the ``login_session`` of the profile, which
 
 The credentials, of 15 minutes, are refreshed before they expire with
 ``CreateOAuth2Token`` of the sign-in service of AWS in the region of the
-profile, with the refresh token of the cache and the proof of possession of
+environment or the profile, with the refresh token of the cache and the proof of possession of
 its key, of DPoP, of RFC 9449, which :mod:`Pyjo.AWS.ECDSA` signs, and written
 back to the cache, as the AWS CLI does, for the hours of the session of the
 console.
@@ -190,7 +190,9 @@ class Pyjo_AWS_Credentials_Login(Provider.object):
 
         The URL of the sign-in service, the one of the ID ``Signin`` that the
         environment or the profile configures, or the one of the region of
-        the profile, as ``https://eu-central-1.signin.aws.amazon.com``.
+        the environment or the profile, as
+        ``https://eu-central-1.signin.aws.amazon.com``, of ``amazonaws.cn`` in
+        the regions of China.
         """
         if url := self.config.endpoint_url('Signin', self.profile):
             return url

@@ -71,9 +71,9 @@ case in the environment and in lower case in the section `services`.
 `Command`, a `Sleep` or other `Steps`, whose `__await__` yields the operation
 itself, and gets the result back, or the exception of its error thrown in.
 No event loop runs the coroutine: `run` drives it with `send` and `throw`,
-blocking, with `start` of the user agent and `subprocess.run`, and `run_p`
-non-blocking, with `start_p` and `run_p` of `Pyjo.IOLoop.ChildProcess`, so
-that the code of a provider of credentials and of a call of the client is
+blocking, with `start` of the user agent, `subprocess.run` and `time.sleep`,
+and `run_p` non-blocking, with `start_p`, `run_p` of
+`Pyjo.IOLoop.ChildProcess` and a timer of the reactor, so that the code of a provider of credentials and of a call of the client is
 written once for both modes. A coroutine that an event loop runs would not
 do: a blocking call cannot run the event loop that is running already, where
 a blocking request of the user agent runs on an event loop of its own. It was
@@ -233,7 +233,8 @@ The credentials are refreshed `refresh` seconds before they expire with
 `CreateOAuth2Token` of the sign-in service, of the model `signin/2023-01-01`
 of botocore: `POST /v1/token` of REST-JSON, unsigned, whose body is the
 `tokenInput` and whose response is the `tokenOutput`, as their `payload`, on
-`https://<region>.signin.aws.amazon.com`, of the region of the profile, as the
+`https://<region>.signin.aws.amazon.com`, of the region of the environment or
+the profile, `amazonaws.cn` in the regions `cn-`, as the
 rules of the endpoints of the model have it for the operations that are not
 of the control plane, or the one of the ID `Signin` that `Pyjo.AWS.Config`
 resolves. The request has the header `DPoP`, of RFC 9449, a JWT of ES256 of
@@ -361,8 +362,9 @@ which serves a bucket with aiobotocore: the same application, with
 The content of an object goes to the client as it comes, of `GetObject`, a
 subclass of `Pyjo.AWS.Protocol.RestXML` in the example, whose transaction
 forwards the chunks of a response of `200` in the event `read` of its
-content, each one once the client has read the one before, as the helper
-`proxy.start_p` of Pyjoyment does, and whose result is `None`, so that the
+content, each one once the one before is written to the client, with the
+stream of S3 stopped meanwhile, as the helper `proxy.start_p` of Pyjoyment
+stops it while the client takes no more, and whose result is `None`, so that the
 body is not kept; the error of S3, as `NoSuchKey`, is read as for any call.
 `proxy.start_p` itself does not do, as it starts the transaction with the
 user agent of the application, and the request of a client is signed and
@@ -393,7 +395,7 @@ chunk a server on the loopback without TLS does not send otherwise.
 ## Imports of the Package
 
 The modules of the distribution import the package and each other relatively,
-`from .. import AWS` and `from . import SigV4`, not as `import Pyjo.AWS.SigV4`:
+`from .. import Credentials` and `from . import SigV4`, not as `import Pyjo.AWS.SigV4`:
 pyright takes `Pyjo` for the regular package of Pyjoyment in `.venv`, which
 hides the namespace that `extend_path` keeps open, so it does not find
 `Pyjo.AWS` of the checkout. The tests and the documentation import them as
@@ -425,13 +427,15 @@ endpoints of AWS that it needs with an application of Pyjoyment.
 
 The distribution depends on the release of Pyjoyment on PyPI, with the lowest
 version that has what it uses, which `uv.lock` pins. A change of Pyjoyment that
-is not released yet would be its Git repository in `[tool.uv.sources]` of
+is not released yet is its Git repository in `[tool.uv.sources]` of
 `pyproject.toml`, until its release, and not a path to the checkout next to
 this one: uv applies the sources of a dependency of Git, so whoever installs
 the distribution from Git would get a subdirectory of this repository that
 does not exist. The lowest version is then the one of Git, as `0.2.1.dev1`,
 which PyPI does not have, so that an installation of PyPI fails to resolve it
-rather than to import what the release has not, and the workflow Build
+rather than to import what the release has not, and so does pip of Git, which
+does not read `[tool.uv.sources]`, so `README.md` installs the development
+version with `uv pip`, and the workflow Build
 installs the wheel with the Pyjoyment of `uv.lock`, of `uv export`, as the
 wheel does not name the source. The tests lay the checkout next to this one over it with
 `--with-editable`, so that they test what is there:
@@ -455,7 +459,7 @@ run with it installed, unlike the one of a distribution of a reactor, which
 runs on the reactor. What the distribution could break is the namespace, with
 an `__init__.py` of `Pyjo` of its own, which the workflow Build checks.
 
-The workflow Tests runs the tests of the distribution against the release of
+The workflow Tests runs the tests of the distribution against the Pyjoyment of
 `uv.lock`, without `--with-editable`, so that a pull request tests what an
 installation gets. A dispatch with `pyjoyment-ref` lays a checkout of the ref
 over it, as in development, so that what the next release of Pyjoyment breaks
@@ -504,7 +508,8 @@ Docs installs it with `uv sync` of `uv.lock` and the group `docs`, not with pip
 and a `docs/requirements.txt` as Pyjoyment does, so that it builds with the
 versions of the lock, as the workflow Docs does. The links to the
 modules of Pyjoyment come from intersphinx. The workflow Docs builds it with
-`-W`, as Read the Docs does, with the Pyjoyment of `uv.lock`:
+`-W`, as Read the Docs does, with the Pyjoyment of `uv.lock`, and in
+development with the checkout next to this one:
 
 ```sh
 mise exec -- uv run --group docs --with-editable ../Pyjoyment sphinx-build -W --keep-going -b html docs docs/_build/html

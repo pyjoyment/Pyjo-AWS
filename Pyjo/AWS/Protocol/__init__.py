@@ -182,7 +182,7 @@ def url_for(url: Pyjo.URL.object, path: str, query: Mapping[str, Any] | None = N
 
     The URL of the path of a call, after the path of an endpoint, with a
     path that is percent-encoded already, as ``/a%2Fb``, and the parameters
-    of a query, whose values of :func:`value` are added to those of the path.
+    of a query, whose values of :func:`value_of` are added to those of the path.
     """
     target = Pyjo.URL.new(path)
     url.path = url.path.to_str().rstrip('/') + (target.path.to_str() or '/')

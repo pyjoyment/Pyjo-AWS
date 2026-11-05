@@ -27,8 +27,8 @@ a shell, and prints the credentials as JSON: ::
       "Expiration": "2026-11-03T12:00:00Z"
     }
 
-A program that exits with an error, or prints something else, is an error,
-with what the program prints on its standard error.
+A program that exits with an error is an error with what the program prints
+on its standard error, and one that prints something else is an error too.
 
 See also
 --------
