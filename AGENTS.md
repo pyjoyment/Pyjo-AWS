@@ -67,16 +67,18 @@ case in the environment and in lower case in the section `services`.
 
 ## The Steps
 
-`Pyjo.AWS.Steps` runs a coroutine that awaits a `Request`, a `Command` or
-other `Steps`, whose `__await__` yields the operation itself, and gets the
-result back, or the exception of its error thrown in. No event loop runs the
-coroutine: `run` drives it with `send` and `throw`, blocking, with `start`
-of the user agent and `subprocess.run`, and `run_p` non-blocking, with
-`start_p` and `run_p` of `Pyjo.IOLoop.ChildProcess`, so that the code of a
-provider of credentials and of a call of the client is written once for
-both modes. A coroutine that an event loop runs would not do: a blocking
-call cannot run the event loop that is running already, where a blocking
-request of the user agent runs on an event loop of its own.
+`Pyjo.Steps` of Pyjoyment runs a coroutine that awaits a `Request`, a
+`Command`, a `Sleep` or other `Steps`, whose `__await__` yields the operation
+itself, and gets the result back, or the exception of its error thrown in.
+No event loop runs the coroutine: `run` drives it with `send` and `throw`,
+blocking, with `start` of the user agent and `subprocess.run`, and `run_p`
+non-blocking, with `start_p` and `run_p` of `Pyjo.IOLoop.ChildProcess`, so
+that the code of a provider of credentials and of a call of the client is
+written once for both modes. A coroutine that an event loop runs would not
+do: a blocking call cannot run the event loop that is running already, where
+a blocking request of the user agent runs on an event loop of its own. It was
+`Pyjo.AWS.Steps` of this distribution, and `Pyjo.GCP.Steps` of Pyjo-GCP,
+until it moved to Pyjoyment (pyjoyment/Pyjoyment#541).
 
 So the coroutine awaits nothing else, not a `Pyjo.Promise` and not a future
 of asyncio, whose `__await__` yields what only an event loop knows, the
@@ -90,28 +92,23 @@ alike: `Steps` has `__await__` and `__iter__` of the same generator, so that
 `await` and `yield from` take the steps of either kind. The code of the
 package is coroutines, as pyright knows the types of what `await` gives
 back, which `yield` leaves as `Any`. `Steps` is generic in what the steps
-return, and `Steps.new` of `Pyjo.Base` loses its parameter, so the package
-calls the class itself, `Steps.Steps(...)`.
+return, and `Pyjo.Steps.new` of `Pyjo.Base` loses its parameter, so the
+package calls the class itself, `Pyjo.Steps.Steps(...)`.
 
 A `Request` names the user agent that starts it, or the one of `run` is
 taken: the client signs its request in the event `start` of its own user
 agent, which a provider of credentials with a user agent of its own would
 not emit otherwise, and the request would go out unsigned, without an error.
 
-A `Command` has an environment and a timeout, for `Pyjo.GCP.Steps`, whose
-copy this is, where the executable of an external account of Google Cloud
-needs them, as `subprocess.run` of google-auth gives them: the blocking run
-passes them to `subprocess.run`, and the non-blocking one gives the
-environment to `Pyjo.IOLoop.ChildProcess` and kills the process with a timer
-of its reactor, which it removes when the process exits first, so that the
-loop does not wait for it. A killed process is an exception of the timeout,
-not its exit code. `credential_process` of the AWS CLI has neither, so
-`Pyjo.AWS.Credentials.Process` passes none.
+A `Command` has an environment and a timeout, which the executable of an
+external account of Google Cloud of Pyjo-GCP needs; a killed process is an
+exception of the timeout, not its exit code. `credential_process` of the AWS
+CLI has neither, so `Pyjo.AWS.Credentials.Process` passes none.
 
 ## The Credentials
 
 A provider of `Pyjo.AWS.Credentials.Provider` gets its credentials in
-`fetch`, a coroutine of `Pyjo.AWS.Steps`, which awaits `start` and `run` of
+`fetch`, a coroutine of `Pyjo.Steps`, which awaits `start` and `run` of
 the provider, and returns the credentials, so that the provider is written
 once for `credentials` and `credentials_p`, and a provider that needs the
 credentials of another, as a role those of its source, awaits its `steps`,
