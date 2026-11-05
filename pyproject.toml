@@ -11,7 +11,7 @@ license = "Artistic-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Piotr Roszatycki", email = "piotr.roszatycki@gmail.com" }]
 requires-python = ">=3.12"
-dependencies = ["Pyjoyment>=0.2.1.dev1"]
+dependencies = ["Pyjoyment>=0.3.0"]
 keywords = ["pyjoyment", "aws", "sigv4", "amazon-web-services"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
@@ -35,14 +35,6 @@ docs = ["sphinx>=9.2.0"]
 # of the distribution, which a new Sphinx may not support, as Sphinx 9.2 does not support 3.12
 [tool.uv.dependency-groups]
 docs = { requires-python = ">=3.14" }
-
-# Pyjoyment of Git until its release 0.2.1, of the dependency >=0.2.1.dev1, whose annotations of Pyjo.DOM pyright strict takes
-# (pyjoyment/Pyjoyment#501), whose hmac_sha256_bytes of Pyjo.Util SigV4 and ECDSA use (pyjoyment/Pyjoyment#524), whose
-# format of Pyjo.Date makes X-Amz-Date of SigV4 (pyjoyment/Pyjoyment#528), whose expanduser of Pyjo.File makes the paths of
-# the shared files and the caches (pyjoyment/Pyjoyment#530) and whose Pyjo.Steps runs the providers of credentials and the
-# calls of the client (pyjoyment/Pyjoyment#541)
-[tool.uv.sources]
-Pyjoyment = { git = "https://github.com/pyjoyment/Pyjoyment", branch = "main" }
 
 # Only the package Pyjo.AWS: the package Pyjo is the one of Pyjoyment, whose namespace extend_path keeps open
 [tool.hatch.build.targets.wheel]
