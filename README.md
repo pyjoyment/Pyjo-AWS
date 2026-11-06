@@ -1,4 +1,4 @@
-[![Home](https://img.shields.io/badge/%F0%9F%8F%A0-Pyjoyment-02a7a0)](https://github.com/pyjoyment/Pyjoyment)
+[![Home](https://img.shields.io/badge/%F0%9F%8F%A0-Pyjoyment-02a7a0)](https://pyjoyment.dev/)
 [![GitHub](https://img.shields.io/github/stars/pyjoyment/Pyjo-AWS?style=flat&label=GitHub%20%E2%AD%90&logo=github)](https://github.com/pyjoyment/Pyjo-AWS)
 [![Documentation](https://img.shields.io/badge/docs-Read_the_Docs-blue?logo=readthedocs&logoColor=white)](https://pyjoyment.readthedocs.io/projects/pyjo-aws/en/stable/)
 [![License](https://img.shields.io/github/license/pyjoyment/Pyjo-AWS.svg)](https://github.com/pyjoyment/Pyjo-AWS/blob/main/LICENSE)
@@ -15,7 +15,7 @@
   </picture>
 </p>
 
-Amazon Web Services for [Pyjoyment](https://github.com/pyjoyment/Pyjoyment):
+Amazon Web Services for [Pyjoyment](https://pyjoyment.dev/):
 the requests of its user agent to the APIs of AWS, signed with Signature
 Version 4, without an SDK. It is for a program that needs a few calls of AWS
 and no dependency for them, not a replacement of the SDKs of AWS, which have
