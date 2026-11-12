@@ -76,7 +76,8 @@ print(lambda_.call(Pyjo.AWS.Protocol.RestJSON.new('GET', '/2018-10-31/layers'))[
 
 The protocols are `Query`, of STS, IAM, SQS and SNS, `JSON`, of DynamoDB,
 KMS and Secrets Manager, `RestJSON`, of Lambda and API Gateway, and
-`RestXML`, of S3 and Route 53:
+`RestXML`, of S3 and Route 53, whose result is the XML of the response, or
+its body with `raw=True`, as the object of `GetObject`:
 
 ```python
 import Pyjo.AWS.Config
@@ -86,6 +87,7 @@ import Pyjo.AWS.Protocol.RestXML
 s3 = Pyjo.AWS.Client.new(service='s3', config=Pyjo.AWS.Config.new(profile='dev'))
 dom = s3.call(Pyjo.AWS.Protocol.RestXML.new('GET', '/my-bucket', query={'list-type': 2, 'prefix': 'logs/'}))
 print(dom.find('Contents > Key').map('text').join('\n'))
+feed = s3.call(Pyjo.AWS.Protocol.RestXML.new('GET', '/my-bucket/feed.xml', raw=True))
 
 secrets = Pyjo.AWS.Client.new(service='secretsmanager')
 call = Pyjo.AWS.Protocol.JSON.new('secretsmanager.GetSecretValue', {'SecretId': 'db'})

@@ -212,12 +212,23 @@ def object_action(c):
         return c.rendered(404)
     if key == 'text.txt':
         return c.render(data=b'Hello!', format='txt')
+    if key == 'feed.xml':
+        return xml(c, FEED)
+    # An object without a Content-Type, which render would give one
+    if key == 'feed':
+        c.res.body = FEED.encode()
+        return c.rendered(200)
+    if key == 'empty.txt':
+        return c.render(data=b'', format='txt')
     xml(
         c,
         '<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message>'
         '<RequestId>request-4</RequestId></Error>',
         404,
     )
+
+
+FEED = '<?xml version="1.0"?>\n<feed>\n  <title>News &amp; more</title>\n</feed>\n'
 
 
 @get('/s3/<bucket>')
@@ -409,17 +420,28 @@ with subtest('REST-XML'):
     s3.call(RestXML('PUT', '/my-bucket/c.xml', '<a/>', headers={'Content-Type': 'application/xml'}))
     is_ok(seen['body'], b'<a/>', 'body of a string')
     is_ok(s3.call(RestXML('GET', '/my-bucket/text.txt')), b'Hello!', 'body not of XML')
+    is_ok(s3.call(RestXML('GET', '/my-bucket/feed.xml')).at('title').text, 'News & more', 'body of XML')
+    is_ok(s3.call(RestXML('GET', '/my-bucket/feed')).at('title').text, 'News & more', 'body without a type')
+    is_ok(s3.call(RestXML('GET', '/my-bucket/feed.xml', raw=True)), FEED.encode(), 'raw body of XML')
+    is_ok(s3.call(RestXML('GET', '/my-bucket/feed', raw=True)), FEED.encode(), 'raw body without a type')
+    is_ok(s3.call(RestXML('GET', '/my-bucket/text.txt', raw=True)), b'Hello!', 'raw body not of XML')
+    is_ok(s3.call(RestXML('GET', '/my-bucket/empty.txt')), None, 'empty body')
+    is_ok(s3.call(RestXML('GET', '/my-bucket/empty.txt', raw=True)), b'', 'raw empty body')
 
     e = error_of(lambda: s3.call(RestXML('GET', '/my-bucket/none.txt')))
     is_ok(e.code, 'NoSuchKey', 'code of the element Error')
     is_ok(e.message, 'NoSuchKey: The specified key does not exist.', 'message')
     is_ok(e.request_id, 'request-4', 'request ID of the element Error')
+    e = error_of(lambda: s3.call(RestXML('GET', '/my-bucket/none.txt', raw=True)))
+    is_ok(e.code, 'NoSuchKey', 'error of a raw call')
     e = error_of(lambda: s3.call(RestXML('GET', '/my-bucket/missing')))
     is_ok(e.code, '404', 'code of the status without a body')
     is_ok(e.message, '404: Not Found', 'message of the status')
 
     result = wait(s3.call_p(RestXML('GET', '/my-bucket')))
     is_ok(result['value'].at('Name').text, 'my-bucket', 'non-blocking')
+    result = wait(s3.call_p(RestXML('GET', '/my-bucket/feed.xml', raw=True)))
+    is_ok(result['value'], FEED.encode(), 'raw, non-blocking')
 
 with subtest('Credentials'):
     provider = Static()
