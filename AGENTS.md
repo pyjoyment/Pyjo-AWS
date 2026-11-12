@@ -159,6 +159,17 @@ and the structure of the API as its documentation has them, and gives the
 result as the response has it: the JSON, or a `Pyjo.DOM` of the XML, with
 the semantics of XML, whose tags keep their case.
 
+The result of `Pyjo.AWS.Protocol.RestXML` is its body of a call of `raw`,
+whatever its `Content-Type`, as the payload of GetObject of S3, of an object
+of XML too, which a `Pyjo.DOM` serialized again would change, of its XML
+declaration, its whitespace and its entities, and empty too, not `None`.
+The models of botocore know of the payload of each operation; without them
+the call is told, as `alt=media` of Pyjo-GCP is, not guessed of the path of
+an object, whose subresources, as `?tagging`, `?acl` and `?uploadId`, give
+XML too, and the paths of Route 53 and CloudFront have more segments too.
+A call without `raw` keeps the XML of a response of XML or without a
+`Content-Type`, as most operations of REST-XML give.
+
 `Pyjo.AWS.Protocol` is generic in its result, as `Protocol.object[T]`, so
 that `call` of a `Query` gives a `Pyjo.DOM` to pyright, and the others
 `Any`.

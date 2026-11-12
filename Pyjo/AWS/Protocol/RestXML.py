@@ -18,14 +18,26 @@ Pyjo.AWS.Protocol.RestXML - Call of the REST-XML protocol of AWS
     call = Pyjo.AWS.Protocol.RestXML.new('PUT', '/my-bucket/hello.txt', b'Hello!', headers={'Content-Type': 'text/plain'})
     s3.call_p(call).then(lambda dom: print('uploaded')).wait()
 
+    feed = s3.call(Pyjo.AWS.Protocol.RestXML.new('GET', '/my-bucket/feed.xml', raw=True))
+
 :mod:`Pyjo.AWS.Protocol.RestXML` is a call of the REST-XML protocol of AWS,
 of the APIs of S3, Route 53 and CloudFront: a method and a path, which is
 percent-encoded already, with the parameters of its query, its headers and
 its body, as XML. The result is the XML of the response, as a
-:mod:`Pyjo.DOM` object, the body of an object of S3 of another type, or
-``None`` without a body, as the response of ``PUT`` of an object of S3,
+:mod:`Pyjo.DOM` object, its body of another type, or ``None`` without a
+body, as the response of ``PUT`` of an object of S3,
 whose result is in its headers, which a subclass of the call reads in its
 :meth:`~Pyjo.AWS.Protocol.Pyjo_AWS_Protocol.result`, and :attr:`~Pyjo.AWS.Error.Pyjo_AWS_Error.tx` of an error has.
+
+The result of a call of
+:attr:`~Pyjo.AWS.Protocol.RestXML.Pyjo_AWS_Protocol_RestXML.raw` is the body
+of the response, whatever its ``Content-Type``, empty too, as the payload of
+GetObject of S3, whose object of XML, as a feed, is not parsed, as a
+:mod:`Pyjo.DOM` object serialized again may differ from it, of its XML
+declaration, its whitespace or its entities. Without the models of the APIs,
+the call does not know which operation has its payload in the body, so
+GetObject sets it, not the call of its path, where the subresources of an
+object, as ``?tagging`` and ``?acl``, give XML too.
 
 The error of the response is the code and the message of its element
 ``Error``, or its status, as ``404`` of ``HEAD``, without a body.
@@ -64,12 +76,14 @@ class Pyjo_AWS_Protocol_RestXML(Protocol.object[Any]):
         *,
         query: Mapping[str, Any] | None = None,
         headers: Mapping[str, str] | None = None,
+        raw: bool = False,
     ) -> None:
         """::
 
             call = Pyjo.AWS.Protocol.RestXML.new('GET', '/my-bucket', query={'list-type': 2})
             call = Pyjo.AWS.Protocol.RestXML.new('PUT', '/my-bucket/hello.txt', b'Hello!')
             call = Pyjo.AWS.Protocol.RestXML.new('POST', '/2013-04-01/hostedzone/Z123/rrset', xml)
+            call = Pyjo.AWS.Protocol.RestXML.new('GET', '/my-bucket/feed.xml', raw=True)
 
         Construct a new :mod:`Pyjo.AWS.Protocol.RestXML` object.
         """
@@ -117,6 +131,15 @@ class Pyjo_AWS_Protocol_RestXML(Protocol.object[Any]):
         The headers of the request.
         """
 
+        self.raw = raw
+        """::
+
+            raw = call.raw
+
+        The body of the response as the result, whatever its type, as the
+        payload of GetObject of S3, not its XML, ``False`` by default.
+        """
+
     def build_tx(self, ua: Pyjo.UserAgent.object, url: Pyjo.URL.object) -> Pyjo.Transaction.HTTP.object:
         """::
 
@@ -149,9 +172,12 @@ class Pyjo_AWS_Protocol_RestXML(Protocol.object[Any]):
             result = call.parse(tx)
 
         The XML of the response, as a :mod:`Pyjo.DOM` object, its body of
-        another type, or ``None`` without a body.
+        another type, or ``None`` without a body, and its body of a call of
+        :attr:`raw`, empty too.
         """
         res = tx.res
+        if self.raw:
+            return res.body
         if not res.body:
             return None
         if 'xml' in (res.headers.content_type or 'xml'):
